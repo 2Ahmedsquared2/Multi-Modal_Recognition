@@ -73,10 +73,16 @@ export interface TSNEPoint {
   y: number;
   class_name: string;
   class_idx: number;
+  predicted_label: string;
+  predicted_idx: number;
+  correct: boolean;
+  confidence: number;
 }
 
 export interface TSNEData {
   points: TSNEPoint[];
   class_names: string[];
+  n_samples: number;
+  accuracy: number;
 }
 

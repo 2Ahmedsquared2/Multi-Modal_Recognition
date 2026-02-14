@@ -113,11 +113,17 @@ class TSNEPoint(BaseModel):
     y: float
     class_name: str
     class_idx: int
+    predicted_label: str
+    predicted_idx: int
+    correct: bool
+    confidence: float
 
 
 class TSNEResponse(BaseModel):
     points: List[TSNEPoint]
     class_names: List[str]
+    n_samples: int
+    accuracy: float
 
 
 # ---------------------------------------------------------------------------

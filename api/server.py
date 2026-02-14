@@ -365,9 +365,14 @@ async def tsne():
 
     try:
         data = np.load(tsne_path, allow_pickle=True)
-        coords = data["coords"]        # (N, 2)
-        labels = data["labels"]         # (N,)
+        coords = data["coords"]            # (N, 2)
+        labels = data["labels"]             # (N,)  — true class indices
+        predictions = data["predictions"]   # (N,)  — predicted class indices
+        confidences = data["confidences"]   # (N,)  — prediction confidence
         class_names = data["class_names"].tolist()
+
+        n_samples = len(coords)
+        n_correct = int(np.sum(labels == predictions))
 
         points = [
             TSNEPoint(
@@ -375,11 +380,20 @@ async def tsne():
                 y=float(coords[i, 1]),
                 class_name=class_names[int(labels[i])],
                 class_idx=int(labels[i]),
+                predicted_label=class_names[int(predictions[i])],
+                predicted_idx=int(predictions[i]),
+                correct=bool(labels[i] == predictions[i]),
+                confidence=round(float(confidences[i]), 4),
             )
-            for i in range(len(coords))
+            for i in range(n_samples)
         ]
 
-        return TSNEResponse(points=points, class_names=class_names)
+        return TSNEResponse(
+            points=points,
+            class_names=class_names,
+            n_samples=n_samples,
+            accuracy=round(n_correct / n_samples, 4) if n_samples > 0 else 0.0,
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,

@@ -144,7 +144,7 @@ Track detailed notes, issues, and learnings for each implementation step:
 - [x] Live Microphone Input (Step 25)
 - [x] Pipeline Animation (Step 26)
 - [x] Interactive Training Dashboard (Step 27)
-- [ ] Interactive t-SNE Explorer (Step 28)
+- [x] Interactive t-SNE Explorer (Step 28)
 - [ ] What-If Tool (Step 29)
 - [ ] Polish & Deployment (Step 30)
 

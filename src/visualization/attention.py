@@ -258,6 +258,9 @@ def visualize_tsne(network, X: np.ndarray, y_onehot: np.ndarray,
     Extracts hidden features from the network, reduces to 2D using sklearn's
     t-SNE, and plots each sample as a dot colored by class.
 
+    Also saves the raw t-SNE coordinates, labels, predictions, and confidences
+    to ``results/metrics/tsne_data.npz`` for the API to serve.
+
     Args:
         network:    Trained NeuralNetwork instance
         X:          Input features, shape (N, D)
@@ -278,6 +281,11 @@ def visualize_tsne(network, X: np.ndarray, y_onehot: np.ndarray,
     if class_names is None:
         class_names = [str(i) for i in range(num_classes)]
 
+    # Run forward pass to get predictions + confidences
+    probs = network.forward(X)
+    pred_classes = np.argmax(probs, axis=1)
+    confidences = np.max(probs, axis=1)
+
     # Adjust perplexity if dataset is small
     effective_perplexity = min(perplexity, len(X) / 4)
 
@@ -287,7 +295,21 @@ def visualize_tsne(network, X: np.ndarray, y_onehot: np.ndarray,
                 random_state=42, max_iter=1000)
     embedded = tsne.fit_transform(features)
 
-    # Plot
+    # ── Save raw data for API ──────────────────────────────────────────
+    metrics_dir = Path("results/metrics")
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+    npz_path = metrics_dir / "tsne_data.npz"
+    np.savez_compressed(
+        npz_path,
+        coords=embedded,
+        labels=true_classes,
+        predictions=pred_classes,
+        confidences=confidences,
+        class_names=np.array(class_names),
+    )
+    print(f"   ✓ t-SNE data saved → {npz_path}")
+
+    # ── Plot ───────────────────────────────────────────────────────────
     fig, ax = plt.subplots(figsize=(10, 8))
     fig.suptitle('t-SNE: Learned Feature Space', fontweight='bold', fontsize=16)
 
