@@ -1,0 +1,740 @@
+# Acoustic Pattern Recognition - Implementation Steps
+
+> **Instructions for Cursor:** Complete each step in order. Each step is self-contained and won't overflow context window. Mark steps complete as you go.
+
+---
+
+## STEP 1: Project Setup & Environment
+**Estimated time:** 15 minutes
+
+### Tasks:
+1. Create project directory structure:
+```
+acoustic-recognition/
+├── data/
+│   ├── raw/
+│   ├── spectrograms/
+│   └── processed/
+├── src/
+│   ├── preprocessing/
+│   ├── neural_network/
+│   ├── training/
+│   └── visualization/
+├── models/
+├── results/
+└── docs/
+```
+
+2. Create `requirements.txt`:
+```
+numpy>=1.24.0
+librosa>=0.10.0
+soundfile>=0.12.0
+matplotlib>=3.7.0
+plotly>=5.14.0
+pandas>=2.0.0
+tqdm>=4.65.0
+scikit-learn>=1.3.0
+```
+
+3. Create empty `__init__.py` files in all `src/` subdirectories
+
+4. Create basic `README.md` with project title and description
+
+### Verification:
+- [ ] Directory structure exists
+- [ ] requirements.txt created
+- [ ] Can import numpy, librosa without errors
+
+**Cursor prompt:** "Set up the project directory structure and create requirements.txt as specified"
+
+---
+
+## STEP 2: Audio Data Loading
+**Estimated time:** 30 minutes
+
+### File: `src/preprocessing/audio_loader.py`
+
+### Tasks:
+1. Create function to download UrbanSound8K dataset (or provide instructions)
+2. Create function to load a single audio file using librosa
+3. Create function to load all audio files from a directory
+4. Handle different sample rates (resample to 22050 Hz)
+5. Trim/pad audio to fixed length (4 seconds = 88200 samples)
+
+### Key functions to implement:
+```python
+def load_audio_file(file_path: str, sr: int = 22050, duration: float = 4.0) -> np.ndarray:
+    """Load and preprocess single audio file"""
+    pass
+
+def load_dataset(data_dir: str, max_files_per_class: int = 500) -> tuple:
+    """Load all audio files with labels"""
+    pass
+```
+
+### Verification:
+- [ ] Can load a single audio file
+- [ ] Can load entire dataset
+- [ ] All audio arrays have same shape
+- [ ] Print dataset statistics (number of samples per class)
+
+**Cursor prompt:** "Create audio_loader.py with functions to load and preprocess audio files from UrbanSound8K dataset"
+
+---
+
+## STEP 3: Spectrogram Generation
+**Estimated time:** 45 minutes
+
+### File: `src/preprocessing/spectrogram_gen.py`
+
+### Tasks:
+1. Create function to convert audio waveform to mel-spectrogram
+2. Normalize spectrograms to [0, 1] range
+3. Resize to fixed dimensions (128x128)
+4. Create function to batch process all audio files
+5. Save spectrograms to disk (as .npy files)
+6. Create visualization function to view spectrograms
+
+### Key functions to implement:
+```python
+def audio_to_spectrogram(audio: np.ndarray, sr: int = 22050, 
+                         n_mels: int = 128, n_fft: int = 2048) -> np.ndarray:
+    """Convert audio to mel-spectrogram"""
+    pass
+
+def process_dataset(audio_data: list, labels: list, save_dir: str) -> tuple:
+    """Convert all audio to spectrograms and save"""
+    pass
+
+def visualize_spectrogram(spec: np.ndarray, title: str = "Spectrogram"):
+    """Display a single spectrogram"""
+    pass
+```
+
+### Verification:
+- [ ] Can convert single audio to spectrogram
+- [ ] Spectrograms are 128x128 shape
+- [ ] Can visualize spectrograms (they should look like heatmaps)
+- [ ] Saved files can be loaded back correctly
+- [ ] Process first 100 samples successfully
+
+**Cursor prompt:** "Create spectrogram_gen.py to convert audio to mel-spectrograms using librosa and save them"
+
+---
+
+## STEP 4: Data Preparation
+**Estimated time:** 20 minutes
+
+### File: `src/preprocessing/data_prep.py`
+
+### Tasks:
+1. Load all saved spectrograms
+2. Flatten spectrograms from (128, 128) to (16384,)
+3. Split into train/validation/test sets (70/15/15)
+4. Normalize data (subtract mean, divide by std)
+5. Convert labels to one-hot encoding
+6. Create mini-batch generator
+
+### Key functions to implement:
+```python
+def load_spectrograms(data_dir: str) -> tuple:
+    """Load all spectrograms and labels"""
+    pass
+
+def prepare_data(X: np.ndarray, y: np.ndarray) -> dict:
+    """Split and normalize data"""
+    pass
+
+def batch_generator(X: np.ndarray, y: np.ndarray, batch_size: int = 32):
+    """Yield mini-batches for training"""
+    pass
+```
+
+### Verification:
+- [ ] Data splits sum to 100% of original data
+- [ ] X_train shape is (N, 16384)
+- [ ] y_train shape is (N, 10) one-hot encoded
+- [ ] Batch generator yields correct batch sizes
+- [ ] Data is normalized (mean ≈ 0, std ≈ 1)
+
+**Cursor prompt:** "Create data_prep.py to load spectrograms, split into train/val/test, normalize, and create batch generator"
+
+---
+
+## STEP 5: Activation Functions
+**Estimated time:** 20 minutes
+
+### File: `src/neural_network/activations.py`
+
+### Tasks:
+Implement activation functions WITH their derivatives for backprop:
+
+1. **ReLU**: `f(x) = max(0, x)` and `f'(x) = 1 if x > 0 else 0`
+2. **Softmax**: `f(x)_i = exp(x_i) / sum(exp(x))` 
+3. **Sigmoid**: `f(x) = 1 / (1 + exp(-x))` (optional, for comparison)
+
+### Key functions to implement:
+```python
+def relu(Z: np.ndarray) -> np.ndarray:
+    """ReLU activation"""
+    pass
+
+def relu_derivative(Z: np.ndarray) -> np.ndarray:
+    """Derivative of ReLU"""
+    pass
+
+def softmax(Z: np.ndarray) -> np.ndarray:
+    """Softmax activation (for output layer)"""
+    pass
+```
+
+### Verification:
+- [ ] relu([1, -1, 0, 2]) = [1, 0, 0, 2]
+- [ ] relu_derivative([1, -1, 0, 2]) = [1, 0, 0, 1]
+- [ ] softmax output sums to 1.0
+- [ ] No numerical overflow in softmax (subtract max before exp)
+
+**Cursor prompt:** "Create activations.py with ReLU, Softmax, and their derivatives. Include numerical stability for softmax"
+
+---
+
+## STEP 6: Loss Function
+**Estimated time:** 15 minutes
+
+### File: `src/neural_network/loss.py`
+
+### Tasks:
+1. Implement cross-entropy loss
+2. Implement derivative of cross-entropy (for backprop)
+3. Add small epsilon to prevent log(0)
+4. Support batch operations
+
+### Key functions to implement:
+```python
+def cross_entropy_loss(y_pred: np.ndarray, y_true: np.ndarray) -> float:
+    """
+    Compute cross-entropy loss
+    y_pred: (batch_size, num_classes) - predicted probabilities
+    y_true: (batch_size, num_classes) - one-hot encoded labels
+    """
+    pass
+
+def cross_entropy_derivative(y_pred: np.ndarray, y_true: np.ndarray) -> np.ndarray:
+    """
+    Derivative of cross-entropy w.r.t predictions
+    For softmax + cross-entropy, this simplifies to: y_pred - y_true
+    """
+    pass
+```
+
+### Verification:
+- [ ] Perfect prediction (y_pred = y_true) gives loss ≈ 0
+- [ ] Completely wrong prediction gives high loss
+- [ ] Batch loss is average over all samples
+- [ ] Derivative has same shape as y_pred
+
+**Cursor prompt:** "Create loss.py with cross-entropy loss and its derivative for backpropagation"
+
+---
+
+## STEP 7: Dense Layer Implementation
+**Estimated time:** 45 minutes
+
+### File: `src/neural_network/layers.py`
+
+### Tasks:
+1. Implement Dense (fully-connected) layer class
+2. Initialize weights using He initialization
+3. Implement forward pass
+4. Implement backward pass (compute gradients)
+5. Cache values needed for backprop
+
+### Key class to implement:
+```python
+class DenseLayer:
+    def __init__(self, input_size: int, output_size: int):
+        """Initialize weights and biases"""
+        # He initialization: W ~ N(0, sqrt(2/input_size))
+        pass
+    
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """
+        Forward pass: Z = X @ W + b
+        Cache X for backprop
+        """
+        pass
+    
+    def backward(self, dZ: np.ndarray, learning_rate: float) -> np.ndarray:
+        """
+        Backward pass: compute dX, dW, db
+        Update weights: W -= learning_rate * dW
+        Return dX for previous layer
+        """
+        pass
+```
+
+### Verification:
+- [ ] Weight shapes are correct: (input_size, output_size)
+- [ ] Forward pass output shape is (batch_size, output_size)
+- [ ] Backward pass returns correct shape for previous layer
+- [ ] Weights update during backward pass
+- [ ] Test with small random data
+
+**Cursor prompt:** "Create layers.py with DenseLayer class implementing forward and backward passes with proper weight initialization"
+
+---
+
+## STEP 8: Neural Network Class
+**Estimated time:** 30 minutes
+
+### File: `src/neural_network/network.py`
+
+### Tasks:
+1. Create Network class that chains multiple layers
+2. Implement forward propagation through all layers
+3. Implement backpropagation through all layers
+4. Add methods to save/load weights
+
+### Architecture:
+```
+Input (16384) → Dense(512) → ReLU → Dense(256) → ReLU → Dense(10) → Softmax
+```
+
+### Key class to implement:
+```python
+class NeuralNetwork:
+    def __init__(self):
+        """Initialize network architecture"""
+        self.layer1 = DenseLayer(16384, 512)
+        self.layer2 = DenseLayer(512, 256)
+        self.layer3 = DenseLayer(256, 10)
+        
+    def forward(self, X: np.ndarray) -> np.ndarray:
+        """Forward pass through all layers"""
+        pass
+    
+    def backward(self, dL_dA3: np.ndarray, learning_rate: float):
+        """Backward pass through all layers"""
+        pass
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Get class predictions (argmax of output)"""
+        pass
+```
+
+### Verification:
+- [ ] Forward pass returns (batch_size, 10) shape
+- [ ] Output probabilities sum to 1 per sample
+- [ ] Backward pass completes without errors
+- [ ] Predictions are integers 0-9
+- [ ] Can save and load weights
+
+**Cursor prompt:** "Create network.py with NeuralNetwork class that chains 3 dense layers with ReLU activations and implements full forward/backward propagation"
+
+---
+
+## STEP 9: Training Loop
+**Estimated time:** 45 minutes
+
+### File: `src/training/trainer.py`
+
+### Tasks:
+1. Implement training loop with mini-batch SGD
+2. Add momentum optimizer
+3. Track loss and accuracy per epoch
+4. Implement early stopping (optional)
+5. Print progress with tqdm
+6. Save best model weights
+
+### Key class to implement:
+```python
+class Trainer:
+    def __init__(self, network, learning_rate=0.01, momentum=0.9):
+        """Initialize trainer with network and hyperparameters"""
+        pass
+    
+    def train_epoch(self, X_train, y_train, batch_size=32):
+        """Train for one epoch, return average loss and accuracy"""
+        pass
+    
+    def validate(self, X_val, y_val):
+        """Compute validation loss and accuracy"""
+        pass
+    
+    def train(self, X_train, y_train, X_val, y_val, epochs=30):
+        """Full training loop"""
+        pass
+```
+
+### Features:
+- SGD with momentum: `v = β*v + gradient; W -= lr * v`
+- Print every epoch: "Epoch 5/30 - Loss: 0.45 - Acc: 85.2% - Val Loss: 0.52 - Val Acc: 82.1%"
+- Save weights when validation accuracy improves
+
+### Verification:
+- [ ] Loss decreases over epochs
+- [ ] Accuracy increases over epochs
+- [ ] Validation metrics are computed correctly
+- [ ] Best model is saved
+- [ ] Can resume training from checkpoint
+
+**Cursor prompt:** "Create trainer.py with SGD + momentum optimizer, training loop, validation, and model checkpointing"
+
+---
+
+## STEP 10: Evaluation & Testing
+**Estimated time:** 30 minutes
+
+### File: `src/training/evaluator.py`
+
+### Tasks:
+1. Compute test set accuracy
+2. Generate confusion matrix
+3. Compute per-class precision/recall
+4. Implement gradient checking (verify backprop math)
+
+### Key functions to implement:
+```python
+def evaluate_model(network, X_test, y_test) -> dict:
+    """Compute accuracy, loss, confusion matrix"""
+    pass
+
+def gradient_check(network, X_sample, y_sample, epsilon=1e-7):
+    """
+    Verify backprop gradients using numerical approximation
+    Compare analytical gradient to: (f(W+ε) - f(W-ε)) / (2ε)
+    """
+    pass
+
+def plot_confusion_matrix(y_true, y_pred, class_names):
+    """Visualize confusion matrix"""
+    pass
+```
+
+### Verification:
+- [ ] Test accuracy is reasonable (>70%)
+- [ ] Confusion matrix shows where model fails
+- [ ] Gradient check error is < 1e-7
+- [ ] Per-class metrics calculated correctly
+
+**Cursor prompt:** "Create evaluator.py with test evaluation, confusion matrix, and gradient checking to validate backpropagation math"
+
+---
+
+## STEP 11: Basic Visualizations
+**Estimated time:** 45 minutes
+
+### File: `src/visualization/plots.py`
+
+### Tasks:
+1. Plot training/validation loss curves
+2. Plot training/validation accuracy curves
+3. Visualize sample predictions (spectrogram + prediction)
+4. Plot confusion matrix with class names
+5. Save all figures to results/figures/
+
+### Key functions to implement:
+```python
+def plot_training_history(history: dict, save_path: str):
+    """Plot loss and accuracy curves"""
+    pass
+
+def plot_sample_predictions(network, X_test, y_test, spectrograms, n_samples=10):
+    """Show spectrograms with true vs predicted labels"""
+    pass
+
+def plot_confusion_matrix(cm: np.ndarray, class_names: list, save_path: str):
+    """Visualize confusion matrix as heatmap"""
+    pass
+```
+
+### Verification:
+- [ ] Loss curves show decreasing trend
+- [ ] Accuracy curves show increasing trend
+- [ ] Sample predictions show spectrograms clearly
+- [ ] Confusion matrix is readable with labels
+- [ ] All plots saved as high-res images
+
+**Cursor prompt:** "Create plots.py to visualize training history, sample predictions, and confusion matrix"
+
+---
+
+## STEP 12: Advanced Visualizations
+**Estimated time:** 60 minutes
+
+### File: `src/visualization/attention.py`
+
+### Tasks:
+1. Implement gradient-based attention (which spectrogram regions matter)
+2. Create t-SNE visualization of learned features
+3. Plot gradient flow through layers
+4. Visualize weight distributions
+
+### Key functions to implement:
+```python
+def compute_attention_map(network, spectrogram: np.ndarray) -> np.ndarray:
+    """
+    Compute gradient of prediction w.r.t input
+    Shows which pixels matter most
+    """
+    pass
+
+def visualize_tsne(network, X_test, y_test):
+    """t-SNE plot of penultimate layer activations"""
+    pass
+
+def plot_gradient_norms(network, X_batch, y_batch):
+    """Plot gradient magnitudes at each layer"""
+    pass
+```
+
+### Verification:
+- [ ] Attention maps highlight relevant frequency bands
+- [ ] t-SNE shows clustering by instrument class
+- [ ] Gradient norms are reasonable (not vanishing/exploding)
+- [ ] Visualizations look professional
+
+**Cursor prompt:** "Create attention.py with gradient-based attention maps, t-SNE visualization, and gradient flow analysis"
+
+---
+
+## STEP 13: Main Training Script
+**Estimated time:** 20 minutes
+
+### File: `train.py` (root directory)
+
+### Tasks:
+1. Parse command-line arguments (epochs, batch_size, learning_rate)
+2. Load and preprocess data
+3. Initialize network
+4. Train model
+5. Evaluate on test set
+6. Generate all visualizations
+7. Save results and model
+
+### Example structure:
+```python
+import argparse
+from src.preprocessing.data_prep import load_spectrograms, prepare_data
+from src.neural_network.network import NeuralNetwork
+from src.training.trainer import Trainer
+from src.training.evaluator import evaluate_model
+from src.visualization.plots import plot_training_history
+
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epochs', type=int, default=30)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--lr', type=float, default=0.01)
+    args = parser.parse_args()
+    
+    # Load data
+    # Initialize network
+    # Train
+    # Evaluate
+    # Visualize
+    # Save
+
+if __name__ == '__main__':
+    main()
+```
+
+### Verification:
+- [ ] Can run `python train.py` successfully
+- [ ] All arguments work correctly
+- [ ] Model trains and saves
+- [ ] Results are generated
+
+**Cursor prompt:** "Create train.py as main entry point that orchestrates data loading, training, evaluation, and visualization"
+
+---
+
+## STEP 14: Documentation
+**Estimated time:** 45 minutes
+
+### Files to create:
+
+#### 1. `docs/math_derivations.md`
+Document the backpropagation math with LaTeX equations:
+- Forward pass equations
+- Loss function
+- Gradients for each layer
+- Chain rule application
+
+#### 2. `docs/architecture.md`
+Document network design decisions:
+- Why 512→256→10 architecture?
+- Why ReLU vs other activations?
+- Why cross-entropy loss?
+- Spectrogram parameters (n_mels, n_fft)
+
+#### 3. `README.md` (update)
+Professional README with:
+- Project overview
+- Architecture diagram
+- Results (accuracy, confusion matrix)
+- How to run
+- Dataset information
+- Requirements
+
+### Verification:
+- [ ] Math equations render correctly
+- [ ] README has clear instructions
+- [ ] Architecture decisions are justified
+- [ ] Looks professional for portfolio
+
+**Cursor prompt:** "Create comprehensive documentation including math derivations, architecture decisions, and professional README"
+
+---
+
+## STEP 15: Testing & Debugging
+**Estimated time:** 30 minutes
+
+### File: `test.py` (root directory)
+
+### Tasks:
+1. Create unit tests for each component
+2. Test data loading
+3. Test forward/backward pass
+4. Test gradient checking
+5. Test saving/loading
+
+### Key tests:
+```python
+def test_spectrogram_generation():
+    """Test audio to spectrogram conversion"""
+    pass
+
+def test_forward_pass():
+    """Test network forward pass shapes"""
+    pass
+
+def test_gradient_check():
+    """Verify backprop math is correct"""
+    pass
+
+def test_save_load():
+    """Test model persistence"""
+    pass
+```
+
+### Verification:
+- [ ] All tests pass
+- [ ] No numerical errors (NaN, Inf)
+- [ ] Gradient check error < 1e-7
+- [ ] Model can be saved and loaded
+
+**Cursor prompt:** "Create test.py with unit tests for all major components to verify correctness"
+
+---
+
+## STEP 16: Portfolio Materials
+**Estimated time:** 60 minutes
+
+### Tasks:
+
+#### 1. Create stunning visualizations for screenshots:
+- Multi-panel training dashboard
+- Attention heatmaps overlaid on spectrograms
+- t-SNE plot with instrument clusters
+- Confusion matrix with instrument icons
+- Network architecture diagram
+
+#### 2. Record demonstration video (60 seconds):
+- Intro: Show spectrograms of different instruments
+- Training: Time-lapse of loss decreasing
+- Results: Show predictions on test samples
+- Math: Show gradient checking validation
+- Outro: Display final accuracy metrics
+
+#### 3. Write portfolio description (see context.md for template)
+
+#### 4. Create architecture diagram:
+- Use draw.io or similar
+- Show data flow: Audio → Spectrogram → Network → Prediction
+- Include layer dimensions
+
+### Deliverables:
+- [ ] 5-10 high-quality screenshots
+- [ ] 60-second demo video
+- [ ] Portfolio write-up
+- [ ] Architecture diagram
+
+**Cursor prompt:** "Help create compelling visualizations and documentation for portfolio presentation"
+
+---
+
+## BONUS STEPS (If Time Permits)
+
+### BONUS 1: Real-time Audio Classification
+**File:** `src/real_time/live_classify.py`
+
+Record from microphone → generate spectrogram → classify in real-time
+
+### BONUS 2: Adversarial Examples
+**File:** `src/experiments/adversarial.py`
+
+Generate audio that fools the network
+
+### BONUS 3: Learning Rate Finder
+**File:** `src/experiments/lr_finder.py`
+
+Automatically find optimal learning rate
+
+### BONUS 4: Custom Activation Experiments
+**File:** `src/experiments/activations.py`
+
+Try Swish, Mish, or custom activations
+
+---
+
+## Completion Checklist
+
+### Core Functionality
+- [ ] Audio loading works
+- [ ] Spectrogram generation works
+- [ ] Neural network trains successfully
+- [ ] Achieves >70% test accuracy
+- [ ] Gradient checking validates math
+
+### Visualizations
+- [ ] Training curves
+- [ ] Confusion matrix
+- [ ] Sample predictions
+- [ ] Attention maps
+- [ ] t-SNE plot
+
+### Documentation
+- [ ] README with instructions
+- [ ] Math derivations documented
+- [ ] Code is commented
+- [ ] Architecture explained
+
+### Portfolio
+- [ ] Screenshots taken
+- [ ] Video recorded
+- [ ] Write-up completed
+- [ ] Looks professional and unique
+
+---
+
+## Tips for Cursor
+
+1. **Context management:** Complete each step fully before moving to the next
+2. **Test as you go:** Run code after each step to catch errors early
+3. **Ask for clarification:** If step is unclear, ask before implementing
+4. **Optimize later:** Get it working first, optimize second
+5. **Save frequently:** Commit code after each completed step
+
+## Emergency Shortcuts
+
+If running out of time:
+- Skip t-SNE visualization (Step 12)
+- Skip adversarial examples (Bonus)
+- Use smaller dataset (100 samples per class)
+- Train for fewer epochs (15 instead of 30)
+- Simplify network (256→128→10 instead of 512→256→10)
+
+The priority is: **Working code > Accuracy > Advanced features**
