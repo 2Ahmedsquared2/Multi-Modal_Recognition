@@ -1,5 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
+import { useModel } from '../contexts/ModelContext';
+import type { ModelEngine } from '../types';
 
 /* ── Inline SVG Icons (no icon library needed) ── */
 
@@ -77,6 +79,13 @@ const navItems = [
   { path: '/what-if', label: 'What-If', icon: IconSliders, description: 'Experiment' },
 ];
 
+/* ── Engine toggle options ── */
+
+const ENGINE_OPTIONS: { value: ModelEngine; label: string; sub: string }[] = [
+  { value: 'custom', label: 'From-Scratch', sub: 'NumPy' },
+  { value: 'pytorch', label: 'PyTorch', sub: 'Framework' },
+];
+
 /* ── Sidebar Component ── */
 
 interface SidebarProps {
@@ -87,6 +96,7 @@ interface SidebarProps {
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { theme, toggle } = useTheme();
   const location = useLocation();
+  const { engine, setEngine } = useModel();
 
   return (
     <aside
@@ -132,8 +142,49 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       {/* Thin separator */}
       <div className="mx-4 h-px bg-slate-200 dark:bg-slate-800" />
 
+      {/* ── Engine toggle ── */}
+      <div className="px-3 pt-4 pb-1">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 px-2 mb-2">
+          Engine
+        </p>
+        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+          {ENGINE_OPTIONS.map((opt) => {
+            const active = engine === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setEngine(opt.value)}
+                className={`flex-1 flex flex-col items-center py-2 px-1 rounded-md text-center
+                  transition-all duration-150
+                  ${active
+                    ? 'bg-white dark:bg-slate-700 shadow-sm'
+                    : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                  }`}
+              >
+                <span className={`text-xs font-medium leading-none
+                  ${active
+                    ? 'text-indigo-600 dark:text-indigo-400'
+                    : 'text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {opt.label}
+                </span>
+                <span className={`text-[9px] mt-0.5 leading-none
+                  ${active
+                    ? 'text-indigo-500/60 dark:text-indigo-400/50'
+                    : 'text-slate-400 dark:text-slate-600'
+                  }`}
+                >
+                  {opt.sub}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 px-3 pt-4 space-y-0.5">
+      <nav className="flex-1 px-3 pt-3 space-y-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (

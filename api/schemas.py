@@ -18,6 +18,7 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     num_classes: Optional[int] = None
     classes: Optional[List[str]] = None
+    available_engines: List[str] = []
 
 
 class LayerInfo(BaseModel):
@@ -44,6 +45,8 @@ class ModelInfoResponse(BaseModel):
     audio_duration: float
     test_accuracy: Optional[float] = None
     macro_f1: Optional[float] = None
+    engine: str = "custom"
+    framework: str = "NumPy (from scratch)"
 
 
 # ---------------------------------------------------------------------------

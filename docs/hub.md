@@ -92,6 +92,9 @@ Track detailed notes, issues, and learnings for each implementation step:
 - [Step 29: What-If Tool](notes/step29_notes.md)
 - [Step 30: Polish & Deployment](notes/step30_notes.md)
 
+### Dual Engine
+- [Step 31: PyTorch Comparison Engine](notes/step31_notes.md)
+
 ---
 
 ## 🚀 Quick Links
@@ -147,6 +150,7 @@ Track detailed notes, issues, and learnings for each implementation step:
 - [x] Interactive t-SNE Explorer (Step 28)
 - [x] What-If Tool (Step 29)
 - [x] Polish & Deployment (Step 30)
+- [x] PyTorch Comparison Engine (Step 31)
 
 ---
 
@@ -156,11 +160,15 @@ Track detailed notes, issues, and learnings for each implementation step:
 Audio_rec_eng/
 ├── docs/              # Documentation
 ├── src/               # Source code
+│   ├── neural_network/  # Custom NumPy NN (from scratch)
+│   ├── pytorch_model/   # PyTorch comparison model
+│   └── ...
 ├── data/              # Datasets
 ├── results/           # Output visualizations
-├── models/            # Saved models
+├── models/            # Saved models (model.npz + pytorch_model.pt)
 ├── notes/             # Step-by-step notes
-└── [docs here]        # Planning documents
+├── api/               # FastAPI backend (dual-engine)
+└── web/               # React + TypeScript frontend
 ```
 
 ---

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import ErrorBoundary from './ErrorBoundary';
+import { useModel } from '../contexts/ModelContext';
 
 export default function Layout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { engine, engineLabel } = useModel();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -35,11 +37,19 @@ export default function Layout() {
           <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight">
             APRE
           </span>
+          <span className={`ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full
+            ${engine === 'pytorch'
+              ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+              : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+            }`}
+          >
+            {engineLabel}
+          </span>
         </div>
 
         <div className="flex-1">
-          <ErrorBoundary key={location.pathname}>
-            <div className="animate-fade-in">
+          <ErrorBoundary key={`${location.pathname}-${engine}`}>
+            <div className="animate-fade-in" key={`${location.pathname}-${engine}`}>
               <Outlet />
             </div>
           </ErrorBoundary>
@@ -49,7 +59,10 @@ export default function Layout() {
         <footer className="border-t border-slate-200 dark:border-slate-800 px-8 py-6">
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-500">
             <p>
-              Built from scratch with NumPy — no TensorFlow, no PyTorch.
+              {engine === 'pytorch'
+                ? 'PyTorch engine — industry-standard ML framework.'
+                : 'Built from scratch with NumPy — no TensorFlow, no PyTorch.'
+              }
             </p>
             <p className="text-slate-400 dark:text-slate-600">
               Acoustic Pattern Recognition Engine

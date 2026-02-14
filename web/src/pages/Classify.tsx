@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { api } from '../api/client';
+import { useModel } from '../contexts/ModelContext';
 import type { ClassifyResult } from '../types';
 import AudioTrimmer from '../components/AudioTrimmer';
 import MicrophoneRecorder from '../components/MicrophoneRecorder';
@@ -11,6 +12,7 @@ type Phase = 'upload' | 'trim' | 'recording' | 'pipeline' | 'results';
 type InputSource = 'upload' | 'mic';
 
 export default function Classify() {
+  const { engine, engineLabel } = useModel();
   const [phase, setPhase] = useState<Phase>('upload');
   const [result, setResult] = useState<ClassifyResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function Classify() {
     setLoading(true);
     try {
       const wavFile = new File([blob], 'segment.wav', { type: 'audio/wav' });
-      const res = await api.classify(wavFile);
+      const res = await api.classify(wavFile, engine);
       setResult(res);
       if (!hasAnimatedRef.current) {
         setPhase('pipeline');
@@ -108,11 +110,21 @@ export default function Classify() {
 
       {/* Header */}
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Classify Audio
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Classify Audio
+          </h1>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
+            ${engine === 'custom'
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+            }`}
+          >
+            {engineLabel}
+          </span>
+        </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Upload an audio file or record from your microphone. The neural network will analyze
+          Upload an audio file or record from your microphone. The {engineLabel} neural network will analyze
           the spectrogram and predict what sound it is.
         </p>
       </header>

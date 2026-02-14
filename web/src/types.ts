@@ -1,10 +1,13 @@
 // API Response Types
 
+export type ModelEngine = 'custom' | 'pytorch';
+
 export interface HealthResponse {
   status: string;
   model_loaded: boolean;
   num_classes?: number;
   classes?: string[];
+  available_engines: ModelEngine[];
 }
 
 export interface ModelInfo {
@@ -27,6 +30,8 @@ export interface ModelInfo {
   audio_duration: number;
   test_accuracy?: number;
   macro_f1?: number;
+  engine: ModelEngine;
+  framework: string;
 }
 
 export interface ClassifyResult {
@@ -91,4 +96,3 @@ export interface WhatIfResponse {
   confidence: number;
   all_confidences: Record<string, number>;
 }
-

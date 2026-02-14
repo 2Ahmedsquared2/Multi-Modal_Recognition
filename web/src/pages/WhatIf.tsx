@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { api } from '../api/client';
+import { useModel } from '../contexts/ModelContext';
 import type { WhatIfResponse } from '../types';
 import SpectrogramEditor from '../components/SpectrogramEditor';
 import type { BrushTool } from '../components/SpectrogramEditor';
@@ -97,6 +98,8 @@ type Phase = 'upload' | 'trim' | 'recording' | 'loaded';
 // ── Main page component ─────────────────────────────────────────────────
 
 export default function WhatIf() {
+  const { engine, engineLabel } = useModel();
+
   // Phase & audio source
   const [phase, setPhase] = useState<Phase>('upload');
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -141,7 +144,7 @@ export default function WhatIf() {
     setLoading(true);
     try {
       const wavFile = new File([blob], 'segment.wav', { type: 'audio/wav' });
-      const result = await api.classify(wavFile);
+      const result = await api.classify(wavFile, engine);
       const spec = result.spectrogram;
       const pred: WhatIfResponse = {
         prediction: result.prediction,
@@ -183,7 +186,7 @@ export default function WhatIf() {
   const predict = useCallback(async (spec: number[][]) => {
     setPredicting(true);
     try {
-      const result = await api.whatIf(spec);
+      const result = await api.whatIf(spec, engine);
       setModifiedPred(result);
 
       // Generate insight by comparing to original
@@ -295,9 +298,17 @@ export default function WhatIf() {
             What-If Tool
           </h1>
           <span className="badge-indigo">Interactive</span>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
+            ${engine === 'custom'
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+            }`}
+          >
+            {engineLabel}
+          </span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Paint on a spectrogram and watch the model's prediction change in real
+          Paint on a spectrogram and watch the {engineLabel} model's prediction change in real
           time. Discover which frequency regions matter most for each sound
           class.
         </p>

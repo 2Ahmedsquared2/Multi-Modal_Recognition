@@ -7,14 +7,21 @@ import type {
   TrainingHistory,
   TSNEData,
   WhatIfResponse,
+  ModelEngine,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+/** Append ?model=... to a URL if engine is specified */
+function withEngine(endpoint: string, engine?: ModelEngine): string {
+  if (!engine) return endpoint;
+  const sep = endpoint.includes('?') ? '&' : '?';
+  return `${endpoint}${sep}model=${engine}`;
+}
+
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, options);
   if (!res.ok) {
-    // Try to extract the detail message from FastAPI's error response
     let message = `API Error: ${res.status} ${res.statusText}`;
     try {
       const body = await res.json();
@@ -27,7 +34,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ── Simple in-memory cache for static data (model info, metrics, etc.) ──
+// ── Cache keyed by full URL (including engine query param) ──
 
 const cache = new Map<string, unknown>();
 
@@ -40,26 +47,31 @@ async function cachedRequest<T>(endpoint: string): Promise<T> {
   return data;
 }
 
+/** Clear cached data for a specific engine (called on engine switch) */
+export function clearCache() {
+  cache.clear();
+}
+
 export const api = {
   health: () =>
     request<HealthResponse>('/api/health'),
 
-  modelInfo: () =>
-    cachedRequest<ModelInfo>('/api/model/info'),
+  modelInfo: (engine?: ModelEngine) =>
+    cachedRequest<ModelInfo>(withEngine('/api/model/info', engine)),
 
-  classify: (file: File) => {
+  classify: (file: File, engine?: ModelEngine) => {
     const form = new FormData();
     form.append('file', file);
-    return request<ClassifyResult>('/api/classify', {
+    return request<ClassifyResult>(withEngine('/api/classify', engine), {
       method: 'POST',
       body: form,
     });
   },
 
-  classifyLive: (blob: Blob) => {
+  classifyLive: (blob: Blob, engine?: ModelEngine) => {
     const form = new FormData();
     form.append('file', blob, 'recording.wav');
-    return request<ClassifyResult>('/api/classify/live', {
+    return request<ClassifyResult>(withEngine('/api/classify/live', engine), {
       method: 'POST',
       body: form,
     });
@@ -74,20 +86,20 @@ export const api = {
     });
   },
 
-  confusionMatrix: () =>
-    cachedRequest<ConfusionMatrix>('/api/model/confusion-matrix'),
+  confusionMatrix: (engine?: ModelEngine) =>
+    cachedRequest<ConfusionMatrix>(withEngine('/api/model/confusion-matrix', engine)),
 
-  classMetrics: () =>
-    cachedRequest<ClassMetricsResponse>('/api/model/class-metrics'),
+  classMetrics: (engine?: ModelEngine) =>
+    cachedRequest<ClassMetricsResponse>(withEngine('/api/model/class-metrics', engine)),
 
-  trainingHistory: () =>
-    cachedRequest<TrainingHistory>('/api/model/training-history'),
+  trainingHistory: (engine?: ModelEngine) =>
+    cachedRequest<TrainingHistory>(withEngine('/api/model/training-history', engine)),
 
-  tsne: () =>
-    cachedRequest<TSNEData>('/api/model/tsne'),
+  tsne: (engine?: ModelEngine) =>
+    cachedRequest<TSNEData>(withEngine('/api/model/tsne', engine)),
 
-  whatIf: (spectrogram: number[][]) =>
-    request<WhatIfResponse>('/api/what-if', {
+  whatIf: (spectrogram: number[][], engine?: ModelEngine) =>
+    request<WhatIfResponse>(withEngine('/api/what-if', engine), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ spectrogram }),

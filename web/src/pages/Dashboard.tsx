@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { useModel } from '../contexts/ModelContext';
 import type {
   ConfusionMatrix,
   ClassMetricsResponse,
@@ -17,6 +18,7 @@ interface ClassMetricRow extends ClassMetric {
 }
 
 export default function Dashboard() {
+  const { engine, engineLabel } = useModel();
   const [confusion, setConfusion] = useState<ConfusionMatrix | null>(null);
   const [metricsResp, setMetricsResp] = useState<ClassMetricsResponse | null>(null);
   const [history, setHistory] = useState<TrainingHistory | null>(null);
@@ -25,11 +27,18 @@ export default function Dashboard() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setError(false);
+    setConfusion(null);
+    setMetricsResp(null);
+    setHistory(null);
+    setModelInfo(null);
+
     Promise.allSettled([
-      api.confusionMatrix(),
-      api.classMetrics(),
-      api.trainingHistory(),
-      api.modelInfo(),
+      api.confusionMatrix(engine),
+      api.classMetrics(engine),
+      api.trainingHistory(engine),
+      api.modelInfo(engine),
     ]).then(([cm, met, hist, info]) => {
       if (cm.status === 'fulfilled') setConfusion(cm.value);
       if (met.status === 'fulfilled') setMetricsResp(met.value);
@@ -40,7 +49,7 @@ export default function Dashboard() {
       setError(true);
       setLoading(false);
     });
-  }, []);
+  }, [engine]);
 
   /* ── Transform per_class Record → sorted array ── */
   let metrics: ClassMetricRow[] | null = null;
@@ -74,11 +83,21 @@ export default function Dashboard() {
 
       {/* Header */}
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Training Dashboard
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Training Dashboard
+          </h1>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
+            ${engine === 'custom'
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+            }`}
+          >
+            {engineLabel}
+          </span>
+        </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Model performance metrics, interactive training curves, and the confusion matrix.
+          {engineLabel} model performance metrics, interactive training curves, and the confusion matrix.
         </p>
       </header>
 

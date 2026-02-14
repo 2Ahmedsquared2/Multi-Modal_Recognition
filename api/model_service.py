@@ -1,14 +1,16 @@
 """
-Model Service — Singleton that loads the trained model and provides inference.
+Model Service — Singleton that loads trained models and provides inference.
 
-Loads at startup:
-  - NeuralNetwork weights from models/model.npz
-  - Normalization stats (mean/std) for feature scaling
-  - SpectrogramGenerator for converting raw audio → mel-spectrogram
-  - Cached evaluation metrics (confusion matrix, per-class P/R/F1)
+Supports two engines:
+  - "custom"  : from-scratch NumPy neural network  (models/model.npz)
+  - "pytorch" : PyTorch neural network             (models/pytorch_model.pt)
+
+Both share the same normalization stats, spectrogram generator, and audio
+processing pipeline. Evaluation metrics are cached per engine.
 """
 
 import numpy as np
+import torch
 import librosa
 import tempfile
 import os
@@ -16,14 +18,18 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from src.neural_network.network import NeuralNetwork
+from src.pytorch_model.model import AudioClassifier
 from src.preprocessing.spectrogram_gen import SpectrogramGenerator
+
+# Valid engine identifiers
+VALID_ENGINES = {"custom", "pytorch"}
 
 
 class ModelService:
     """
-    Singleton service that loads the trained model, normalization stats,
-    and spectrogram generator once at startup.  All inference and metric
-    queries go through this instance.
+    Singleton service that loads both the custom and PyTorch models,
+    normalization stats, and spectrogram generator once at startup.
+    All inference and metric queries go through this instance.
     """
 
     _instance: Optional["ModelService"] = None
@@ -38,7 +44,13 @@ class ModelService:
         if self._initialized:
             return
 
+        # Custom (NumPy) model
         self.network: Optional[NeuralNetwork] = None
+
+        # PyTorch model
+        self.pytorch_model: Optional[AudioClassifier] = None
+
+        # Shared resources
         self.spec_gen: Optional[SpectrogramGenerator] = None
         self.class_names: List[str] = []
         self.num_classes: int = 0
@@ -48,11 +60,21 @@ class ModelService:
         self.duration: float = 2.0
         self.target_shape: Tuple[int, int] = (64, 64)
 
-        # Cached evaluation results
-        self._confusion_matrix: Optional[np.ndarray] = None
-        self._per_class_metrics: Optional[Dict] = None
-        self._test_accuracy: Optional[float] = None
-        self._macro_f1: Optional[float] = None
+        # Cached evaluation results — per engine
+        self._cache: Dict[str, Dict] = {
+            "custom": {
+                "confusion_matrix": None,
+                "per_class_metrics": None,
+                "test_accuracy": None,
+                "macro_f1": None,
+            },
+            "pytorch": {
+                "confusion_matrix": None,
+                "per_class_metrics": None,
+                "test_accuracy": None,
+                "macro_f1": None,
+            },
+        }
 
         self._initialized = True
 
@@ -63,20 +85,27 @@ class ModelService:
     def load(
         self,
         model_path: str = "models/model.npz",
+        pytorch_model_path: str = "models/pytorch_model.pt",
         norm_stats_path: str = "models/norm_stats.npz",
         prepared_data_path: str = "data/prepared/prepared_data.npz",
     ) -> None:
         """
-        Load model, normalization stats, and optionally run evaluation.
-
-        If models/norm_stats.npz does not exist yet it is extracted from the
-        larger prepared_data.npz so future startups are faster.
+        Load both models, normalization stats, and run evaluation.
         """
 
-        # 1. Load the neural network ----------------------------------------
+        # 1. Load the custom NumPy network -----------------------------------
         self.network = NeuralNetwork.load(model_path)
 
-        # 2. Load / extract normalization stats ------------------------------
+        # 2. Load the PyTorch network ----------------------------------------
+        pt_path = Path(pytorch_model_path)
+        if pt_path.exists():
+            self.pytorch_model = AudioClassifier.load(pytorch_model_path)
+            self.pytorch_model.eval()
+            print(f"🔥 PyTorch model loaded from: {pytorch_model_path}")
+        else:
+            print(f"⚠️  PyTorch model not found at {pytorch_model_path} — skipping")
+
+        # 3. Load / extract normalization stats -------------------------------
         norm_path = Path(norm_stats_path)
         if norm_path.exists():
             stats = np.load(norm_stats_path, allow_pickle=True)
@@ -100,7 +129,6 @@ class ModelService:
             self.class_names = data["class_names"].tolist()
             self.num_classes = len(self.class_names)
 
-            # Persist small file for fast future loads
             norm_path.parent.mkdir(parents=True, exist_ok=True)
             np.savez_compressed(
                 norm_stats_path,
@@ -110,47 +138,61 @@ class ModelService:
             )
             print(f"💾 Saved norm stats to: {norm_stats_path}")
 
-        # 3. Spectrogram generator ------------------------------------------
+        # 4. Spectrogram generator --------------------------------------------
         self.spec_gen = SpectrogramGenerator(
             sample_rate=self.sample_rate,
             target_shape=self.target_shape,
         )
 
-        # 4. Evaluate on test set and cache metrics -------------------------
-        self._run_evaluation(prepared_data_path)
+        # 5. Evaluate both models on test set ---------------------------------
+        self._run_evaluation(prepared_data_path, "custom")
+        if self.pytorch_model is not None:
+            self._run_evaluation(prepared_data_path, "pytorch")
 
         print(f"\n✅ ModelService ready!")
         print(f"   Classes: {self.class_names}")
-        print(f"   Parameters: {self.network.count_parameters():,}")
+        print(f"   Custom parameters: {self.network.count_parameters():,}")
+        if self.pytorch_model:
+            print(f"   PyTorch parameters: {self.pytorch_model.count_parameters():,}")
 
     # ------------------------------------------------------------------
-    # Evaluation (run once at startup)
+    # Evaluation (run once at startup per engine)
     # ------------------------------------------------------------------
 
-    def _run_evaluation(self, prepared_data_path: str) -> None:
+    def _run_evaluation(self, prepared_data_path: str, engine: str) -> None:
         """Run forward pass on test set and cache confusion matrix + metrics."""
         try:
             prep_path = Path(prepared_data_path)
             if not prep_path.exists():
-                print("⚠️  No prepared data — skipping evaluation cache")
+                print(f"⚠️  No prepared data — skipping {engine} evaluation cache")
                 return
 
             data = np.load(prepared_data_path, allow_pickle=True)
             X_test = data["X_test"]
             y_test = data["y_test"]
-
-            probs = self.network.forward(X_test)
-            pred_classes = np.argmax(probs, axis=1)
             true_classes = np.argmax(y_test, axis=1)
 
+            # Forward pass with the appropriate engine
+            if engine == "custom":
+                probs = self.network.forward(X_test)
+            else:
+                self.pytorch_model.eval()
+                with torch.no_grad():
+                    probs = self.pytorch_model.predict_proba(
+                        torch.FloatTensor(X_test)
+                    ).numpy()
+
+            pred_classes = np.argmax(probs, axis=1)
+
             # Accuracy
-            self._test_accuracy = float(np.mean(pred_classes == true_classes))
+            cache = self._cache[engine]
+            cache["test_accuracy"] = float(np.mean(pred_classes == true_classes))
 
             # Confusion matrix
             cm = np.zeros((self.num_classes, self.num_classes), dtype=int)
             for t, p in zip(true_classes, pred_classes):
                 cm[t, p] += 1
-            self._confusion_matrix = cm
+            cache["confusion_matrix"] = cm
 
             # Per-class metrics
             per_class: Dict[str, Dict] = {}
@@ -171,46 +213,66 @@ class ModelService:
                     "f1_score": round(float(f1), 4),
                     "support": int(cm[i, :].sum()),
                 }
-            self._per_class_metrics = per_class
+            cache["per_class_metrics"] = per_class
 
             f1_scores = [m["f1_score"] for m in per_class.values()]
-            self._macro_f1 = round(float(np.mean(f1_scores)), 4)
+            cache["macro_f1"] = round(float(np.mean(f1_scores)), 4)
 
             print(
-                f"📈 Evaluation cached: test acc = {self._test_accuracy:.2%}, "
-                f"macro F1 = {self._macro_f1:.4f}"
+                f"📈 [{engine}] Evaluation cached: test acc = "
+                f"{cache['test_accuracy']:.2%}, macro F1 = {cache['macro_f1']:.4f}"
             )
         except Exception as e:
-            print(f"⚠️  Could not cache evaluation: {e}")
+            print(f"⚠️  Could not cache {engine} evaluation: {e}")
+
+    # ------------------------------------------------------------------
+    # Engine availability
+    # ------------------------------------------------------------------
+
+    def available_engines(self) -> List[str]:
+        """Return list of loaded engines."""
+        engines = []
+        if self.network is not None:
+            engines.append("custom")
+        if self.pytorch_model is not None:
+            engines.append("pytorch")
+        return engines
+
+    def _validate_engine(self, engine: str) -> str:
+        """Validate and default the engine parameter."""
+        if engine not in VALID_ENGINES:
+            engine = "custom"
+        if engine == "pytorch" and self.pytorch_model is None:
+            engine = "custom"
+        return engine
 
     # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------
 
-    def classify(self, audio: np.ndarray) -> Dict:
+    def classify(self, audio: np.ndarray, engine: str = "custom") -> Dict:
         """
         Classify a raw audio waveform.
 
         Args:
             audio: 1-D numpy array at self.sample_rate Hz
+            engine: "custom" or "pytorch"
 
         Returns:
             dict with prediction, confidence, all_confidences,
             spectrogram (2-D list), waveform (downsampled), and waveform_summary.
         """
+        engine = self._validate_engine(engine)
         audio = self._pad_or_trim(audio)
 
-        # Spectrogram (2-D, [0, 1] normalized per-sample)
         spectrogram = self.spec_gen.audio_to_spectrogram(audio)
 
-        # Flatten → global normalization → forward
         flat = spectrogram.flatten().reshape(1, -1)
         flat_normalized = self._normalize(flat)
-        probs = self.network.forward(flat_normalized)[0]
 
+        probs = self._forward(flat_normalized, engine)[0]
         pred_idx = int(np.argmax(probs))
 
-        # Downsample waveform for frontend display (~500 points)
         waveform_display = self._downsample_waveform(audio, target_points=500)
 
         return {
@@ -234,19 +296,16 @@ class ModelService:
         audio = self._pad_or_trim(audio)
         return self.spec_gen.audio_to_spectrogram(audio)
 
-    def classify_spectrogram(self, spectrogram: np.ndarray) -> Dict:
+    def classify_spectrogram(
+        self, spectrogram: np.ndarray, engine: str = "custom"
+    ) -> Dict:
         """
         Classify a raw 2-D spectrogram (used by the What-If tool).
-
-        Args:
-            spectrogram: 2-D numpy array (e.g. 64×64)
-
-        Returns:
-            dict with prediction, confidence, all_confidences
         """
+        engine = self._validate_engine(engine)
         flat = spectrogram.flatten().reshape(1, -1)
         flat_normalized = self._normalize(flat)
-        probs = self.network.forward(flat_normalized)[0]
+        probs = self._forward(flat_normalized, engine)[0]
         pred_idx = int(np.argmax(probs))
 
         return {
@@ -258,23 +317,49 @@ class ModelService:
             },
         }
 
+    def _forward(self, X: np.ndarray, engine: str) -> np.ndarray:
+        """Run forward pass on the selected engine, return probabilities as numpy."""
+        if engine == "pytorch":
+            self.pytorch_model.eval()
+            with torch.no_grad():
+                return self.pytorch_model.predict_proba(
+                    torch.FloatTensor(X)
+                ).numpy()
+        else:
+            return self.network.forward(X)
+
     # ------------------------------------------------------------------
     # Info / cached metrics
     # ------------------------------------------------------------------
 
-    def get_model_info(self) -> Dict:
+    def get_model_info(self, engine: str = "custom") -> Dict:
         """Architecture, param count, and (optionally) test-set metrics."""
-        sizes = (
-            [self.network.input_size]
-            + self.network.hidden_sizes
-            + [self.network.num_classes]
-        )
+        engine = self._validate_engine(engine)
+
+        if engine == "pytorch" and self.pytorch_model is not None:
+            model = self.pytorch_model
+            sizes = (
+                [model.input_size]
+                + model.hidden_sizes
+                + [model.num_classes]
+            )
+            param_count = model.count_parameters()
+            framework = "PyTorch"
+        else:
+            model = self.network
+            sizes = (
+                [model.input_size]
+                + model.hidden_sizes
+                + [model.num_classes]
+            )
+            param_count = model.count_parameters()
+            framework = "NumPy (from scratch)"
 
         layers = []
         for i in range(len(sizes) - 1):
             layers.append(
                 {
-                    "type": "Dense",
+                    "type": "Dense" if engine == "custom" else "Linear",
                     "input_size": sizes[i],
                     "output_size": sizes[i + 1],
                     "activation": "ReLU" if i < len(sizes) - 2 else "Softmax",
@@ -282,42 +367,50 @@ class ModelService:
                 }
             )
 
+        cache = self._cache[engine]
+
         info: Dict = {
             "architecture": {
-                "input_size": self.network.input_size,
-                "hidden_sizes": self.network.hidden_sizes,
-                "num_classes": self.network.num_classes,
+                "input_size": sizes[0],
+                "hidden_sizes": sizes[1:-1],
+                "num_classes": sizes[-1],
                 "layers": layers,
             },
-            "parameters": self.network.count_parameters(),
+            "parameters": param_count,
             "class_names": self.class_names,
             "spectrogram_shape": list(self.target_shape),
             "sample_rate": self.sample_rate,
             "audio_duration": self.duration,
+            "engine": engine,
+            "framework": framework,
         }
 
-        if self._test_accuracy is not None:
-            info["test_accuracy"] = round(self._test_accuracy, 4)
-        if self._macro_f1 is not None:
-            info["macro_f1"] = self._macro_f1
+        if cache["test_accuracy"] is not None:
+            info["test_accuracy"] = round(cache["test_accuracy"], 4)
+        if cache["macro_f1"] is not None:
+            info["macro_f1"] = cache["macro_f1"]
 
         return info
 
-    def get_confusion_matrix(self) -> Optional[Dict]:
-        if self._confusion_matrix is None:
+    def get_confusion_matrix(self, engine: str = "custom") -> Optional[Dict]:
+        engine = self._validate_engine(engine)
+        cm = self._cache[engine]["confusion_matrix"]
+        if cm is None:
             return None
         return {
-            "matrix": self._confusion_matrix.tolist(),
+            "matrix": cm.tolist(),
             "class_names": self.class_names,
         }
 
-    def get_class_metrics(self) -> Optional[Dict]:
-        if self._per_class_metrics is None:
+    def get_class_metrics(self, engine: str = "custom") -> Optional[Dict]:
+        engine = self._validate_engine(engine)
+        cache = self._cache[engine]
+        if cache["per_class_metrics"] is None:
             return None
         return {
-            "per_class": self._per_class_metrics,
-            "macro_f1": self._macro_f1,
-            "test_accuracy": self._test_accuracy,
+            "per_class": cache["per_class_metrics"],
+            "macro_f1": cache["macro_f1"],
+            "test_accuracy": cache["test_accuracy"],
         }
 
     # ------------------------------------------------------------------
@@ -370,15 +463,11 @@ class ModelService:
     ) -> List[float]:
         """
         Downsample a waveform to ~target_points for lightweight frontend display.
-
-        Uses bucket-based min/max envelope so peaks are preserved.
-        Returns a flat list of floats.
         """
         n = len(audio)
         if n <= target_points:
             return [round(float(x), 5) for x in audio]
 
-        # Each bucket produces 2 points (min, max) → target_points/2 buckets
         n_buckets = target_points // 2
         bucket_size = n / n_buckets
         envelope: List[float] = []

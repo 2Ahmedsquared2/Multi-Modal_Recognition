@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '../api/client';
+import { useModel } from '../contexts/ModelContext';
 import type { TSNEData, TSNEPoint } from '../types';
 import TSNEPlot from '../components/TSNEPlot';
 
@@ -20,6 +21,8 @@ const CLASS_COLORS: Record<string, string> = {
 const FALLBACK_COLOR = '#94a3b8';
 
 export default function Explorer() {
+  const { engine, engineLabel } = useModel();
+
   /* ── Data ── */
   const [tsne, setTsne] = useState<TSNEData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,16 +33,21 @@ export default function Explorer() {
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  /* ── Fetch ── */
+  /* ── Fetch (re-fetch when engine changes) ── */
   useEffect(() => {
-    api.tsne()
+    setLoading(true);
+    setError(false);
+    setTsne(null);
+    setSelectedIdx(null);
+
+    api.tsne(engine)
       .then((data) => {
         setTsne(data);
         setVisibleClasses(new Set(data.class_names));
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [engine]);
 
   /* ── Derived stats ── */
   const stats = useMemo(() => {
@@ -97,11 +105,21 @@ export default function Explorer() {
 
       {/* ── Header ── */}
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Feature Explorer
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Feature Explorer
+          </h1>
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
+            ${engine === 'custom'
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+            }`}
+          >
+            {engineLabel}
+          </span>
+        </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          t-SNE visualization of how the neural network organizes different sounds in
+          t-SNE visualization of how the {engineLabel} neural network organizes different sounds in
           its learned feature space. Points that cluster together sound similar to the network.
         </p>
       </header>

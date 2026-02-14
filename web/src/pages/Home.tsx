@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { HealthResponse } from '../types';
+import { useModel } from '../contexts/ModelContext';
+import type { HealthResponse, ModelInfo } from '../types';
 
 /* ── Pipeline stage data ── */
 
@@ -66,7 +67,9 @@ const features = [
 /* ── Component ── */
 
 export default function Home() {
+  const { engine, engineLabel } = useModel();
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -74,6 +77,14 @@ export default function Home() {
       .then(setHealth)
       .catch(() => setError(true));
   }, []);
+
+  useEffect(() => {
+    api.modelInfo(engine)
+      .then(setModelInfo)
+      .catch(() => {});
+  }, [engine]);
+
+  const isCustom = engine === 'custom';
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10 space-y-12">
@@ -83,6 +94,14 @@ export default function Home() {
         <div className="flex items-center gap-2">
           <span className="badge-indigo">Research Project</span>
           {health && <span className="badge-emerald">Model Loaded</span>}
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
+            ${isCustom
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
+              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+            }`}
+          >
+            {engineLabel} Engine
+          </span>
           {error && (
             <span className="badge bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
               Backend offline
@@ -93,9 +112,10 @@ export default function Home() {
           Acoustic Pattern Recognition Engine
         </h1>
         <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-          A neural network built from scratch — no PyTorch, no TensorFlow — that learns
-          to recognize environmental sounds from their spectrograms. Every forward pass,
-          every gradient, every weight update is hand-implemented in NumPy.
+          {isCustom
+            ? 'A neural network built from scratch — no PyTorch, no TensorFlow — that learns to recognize environmental sounds from their spectrograms. Every forward pass, every gradient, every weight update is hand-implemented in NumPy.'
+            : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same dataset and architecture.'
+          }
         </p>
       </header>
 
@@ -141,9 +161,21 @@ export default function Home() {
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Architecture', value: '3-Layer Dense', sub: 'ReLU + Softmax' },
-          { label: 'Classes', value: health ? String(health.num_classes) : '10', sub: 'UrbanSound8K' },
-          { label: 'Implementation', value: 'Pure NumPy', sub: 'No ML frameworks' },
-          { label: 'Parameters', value: '~270K', sub: 'Trainable weights' },
+          { label: 'Classes', value: health ? String(health.num_classes) : '10', sub: 'Instrument families' },
+          {
+            label: 'Implementation',
+            value: isCustom ? 'Pure NumPy' : 'PyTorch',
+            sub: isCustom ? 'No ML frameworks' : 'nn.Sequential',
+          },
+          {
+            label: 'Test Accuracy',
+            value: modelInfo?.test_accuracy != null
+              ? `${(modelInfo.test_accuracy * 100).toFixed(1)}%`
+              : '—',
+            sub: modelInfo
+              ? `${modelInfo.parameters.toLocaleString()} params`
+              : 'Loading...',
+          },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
             <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-500">

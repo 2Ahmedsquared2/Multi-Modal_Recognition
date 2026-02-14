@@ -1,9 +1,9 @@
 """
 FastAPI Server — Acoustic Pattern Recognition Engine
 
-Wraps the from-scratch NumPy neural network as a REST API.
-Serves classification, spectrogram generation, evaluation metrics,
-and interactive tool endpoints for the React frontend.
+Wraps the from-scratch NumPy neural network AND a PyTorch comparison model
+as a REST API.  All endpoints accept an optional `model` query parameter
+("custom" or "pytorch") to select the inference engine.
 
 Run:
     uvicorn api.server:app --reload --port 8000
@@ -15,7 +15,7 @@ import numpy as np
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.model_service import ModelService
@@ -39,15 +39,18 @@ from api.schemas import (
 
 model_service = ModelService()
 
+# Engine query parameter description (reused across endpoints)
+ENGINE_DESC = "Model engine to use: 'custom' (NumPy from-scratch) or 'pytorch'"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load model once at startup, clean up on shutdown."""
+    """Load models once at startup, clean up on shutdown."""
     print("\n🚀 Starting Acoustic Pattern Recognition API...")
     start = time.time()
     model_service.load()
     elapsed = time.time() - start
-    print(f"⏱️  Model loaded in {elapsed:.2f}s\n")
+    print(f"⏱️  Models loaded in {elapsed:.2f}s\n")
     yield
     print("\n👋 Shutting down API...")
 
@@ -59,11 +62,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Acoustic Pattern Recognition Engine",
     description=(
-        "REST API for instrument classification using a from-scratch "
-        "NumPy neural network.  Upload audio or a spectrogram and get "
-        "predictions, confidence scores, and evaluation metrics."
+        "REST API for instrument classification.  Supports two engines: "
+        "a from-scratch NumPy neural network and a PyTorch comparison model.  "
+        "Pass `?model=custom` or `?model=pytorch` to select the engine."
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -77,7 +80,6 @@ _cors_origins = [
     "http://127.0.0.1:3000",
 ]
 
-# Add deployed frontend URL(s) from environment, comma-separated
 _extra_origins = _os.environ.get("CORS_ORIGINS", "")
 if _extra_origins:
     _cors_origins.extend([o.strip() for o in _extra_origins.split(",") if o.strip()])
@@ -97,22 +99,23 @@ app.add_middleware(
 
 @app.get("/api/health", response_model=HealthResponse, tags=["Health"])
 async def health():
-    """Health check — confirms the API is up and model is loaded."""
+    """Health check — confirms the API is up and which engines are loaded."""
     model_loaded = model_service.network is not None
     return HealthResponse(
         status="ok",
         model_loaded=model_loaded,
         num_classes=len(model_service.class_names) if model_loaded else None,
         classes=model_service.class_names if model_loaded else None,
+        available_engines=model_service.available_engines(),
     )
 
 
 @app.get("/api/model/info", response_model=ModelInfoResponse, tags=["Model"])
-async def model_info():
+async def model_info(model: str = Query("custom", description=ENGINE_DESC)):
     """Architecture, parameter count, class names, and test-set metrics."""
     if model_service.network is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
-    return model_service.get_model_info()
+    return model_service.get_model_info(engine=model)
 
 
 # ===================================================================
@@ -127,17 +130,12 @@ ALLOWED_CONTENT_TYPES = {
     "audio/ogg", "audio/flac",
     "audio/mp4", "audio/x-m4a", "audio/aac",
     "audio/x-ms-wma",
-    "application/octet-stream",   # browsers sometimes send this
+    "application/octet-stream",
 }
 
 
 async def _validate_and_read(file: UploadFile, label: str = "audio") -> bytes:
-    """
-    Validate an uploaded audio file for type and size, then return bytes.
-
-    Raises HTTPException with 413 (too large) or 415 (unsupported type).
-    """
-    # --- Extension check ---
+    """Validate an uploaded audio file for type and size, then return bytes."""
     filename = file.filename or "upload.wav"
     ext = Path(filename).suffix.lower()
     if ext and ext not in ALLOWED_EXTENSIONS:
@@ -149,7 +147,6 @@ async def _validate_and_read(file: UploadFile, label: str = "audio") -> bytes:
             ),
         )
 
-    # --- Content-type check (lenient — browsers are inconsistent) ---
     ct = (file.content_type or "").lower()
     if ct and ct not in ALLOWED_CONTENT_TYPES and not ct.startswith("audio/"):
         raise HTTPException(
@@ -160,7 +157,6 @@ async def _validate_and_read(file: UploadFile, label: str = "audio") -> bytes:
             ),
         )
 
-    # --- Read + size check ---
     audio_bytes = await file.read()
     if len(audio_bytes) > MAX_FILE_SIZE:
         size_mb = len(audio_bytes) / (1024 * 1024)
@@ -184,14 +180,11 @@ async def _validate_and_read(file: UploadFile, label: str = "audio") -> bytes:
 # ===================================================================
 
 @app.post("/api/classify", response_model=ClassifyResponse, tags=["Classification"])
-async def classify(file: UploadFile = File(...)):
-    """
-    Upload an audio file → get instrument prediction + confidence scores.
-
-    Accepts any format supported by librosa (.wav, .mp3, .flac, .ogg, etc.).
-    Returns the predicted class, per-class confidence, the generated
-    mel-spectrogram, and basic waveform metadata.
-    """
+async def classify(
+    file: UploadFile = File(...),
+    model: str = Query("custom", description=ENGINE_DESC),
+):
+    """Upload an audio file → get instrument prediction + confidence scores."""
     if model_service.network is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -201,7 +194,7 @@ async def classify(file: UploadFile = File(...)):
         audio = model_service.load_audio_from_bytes(
             audio_bytes, file.filename or "upload.wav"
         )
-        result = model_service.classify(audio)
+        result = model_service.classify(audio, engine=model)
         return result
     except Exception as e:
         raise HTTPException(
@@ -215,13 +208,11 @@ async def classify(file: UploadFile = File(...)):
     response_model=ClassifyResponse,
     tags=["Classification"],
 )
-async def classify_live(file: UploadFile = File(...)):
-    """
-    Classify a live audio chunk from the browser microphone.
-
-    Same processing pipeline as /api/classify — accepts a short WAV
-    blob captured via the Web Audio API.
-    """
+async def classify_live(
+    file: UploadFile = File(...),
+    model: str = Query("custom", description=ENGINE_DESC),
+):
+    """Classify a live audio chunk from the browser microphone."""
     if model_service.network is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -231,7 +222,7 @@ async def classify_live(file: UploadFile = File(...)):
         audio = model_service.load_audio_from_bytes(
             audio_bytes, file.filename or "live.wav"
         )
-        result = model_service.classify(audio)
+        result = model_service.classify(audio, engine=model)
         return result
     except Exception as e:
         raise HTTPException(
@@ -250,9 +241,7 @@ async def classify_live(file: UploadFile = File(...)):
     tags=["Spectrogram"],
 )
 async def spectrogram(file: UploadFile = File(...)):
-    """
-    Upload an audio file → get the 64×64 mel-spectrogram as a 2-D JSON array.
-    """
+    """Upload an audio file → get the 64×64 mel-spectrogram as a 2-D JSON array."""
     if model_service.network is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -283,9 +272,9 @@ async def spectrogram(file: UploadFile = File(...)):
     response_model=ConfusionMatrixResponse,
     tags=["Metrics"],
 )
-async def confusion_matrix():
+async def confusion_matrix(model: str = Query("custom", description=ENGINE_DESC)):
     """Confusion matrix computed on the held-out test set at startup."""
-    result = model_service.get_confusion_matrix()
+    result = model_service.get_confusion_matrix(engine=model)
     if result is None:
         raise HTTPException(
             status_code=404,
@@ -299,9 +288,9 @@ async def confusion_matrix():
     response_model=ClassMetricsResponse,
     tags=["Metrics"],
 )
-async def class_metrics():
+async def class_metrics(model: str = Query("custom", description=ENGINE_DESC)):
     """Per-class precision, recall, F1-score from test-set evaluation."""
-    result = model_service.get_class_metrics()
+    result = model_service.get_class_metrics(engine=model)
     if result is None:
         raise HTTPException(
             status_code=404,
@@ -315,21 +304,20 @@ async def class_metrics():
     response_model=TrainingHistoryResponse,
     tags=["Metrics"],
 )
-async def training_history():
-    """
-    Training / validation loss and accuracy curves.
-
-    Requires ``results/metrics/training_history.npz`` to have been saved
-    during training.  Returns 404 if the file does not exist.
-    """
-    history_path = Path("results/metrics/training_history.npz")
+async def training_history(model: str = Query("custom", description=ENGINE_DESC)):
+    """Training / validation loss and accuracy curves."""
+    # Choose the correct history file
+    if model == "pytorch":
+        history_path = Path("results/metrics/pytorch_training_history.npz")
+    else:
+        history_path = Path("results/metrics/training_history.npz")
 
     if not history_path.exists():
         raise HTTPException(
             status_code=404,
             detail=(
-                "Training history not saved. "
-                "Re-run training to generate results/metrics/training_history.npz."
+                f"Training history not saved for {model} engine. "
+                f"Expected: {history_path}"
             ),
         )
 
@@ -354,30 +342,28 @@ async def training_history():
     response_model=TSNEResponse,
     tags=["Metrics"],
 )
-async def tsne():
-    """
-    t-SNE 2-D embeddings of test-set features.
-
-    Requires ``results/metrics/tsne_data.npz`` to have been pre-computed.
-    Returns 404 if the file does not exist.
-    """
-    tsne_path = Path("results/metrics/tsne_data.npz")
+async def tsne(model: str = Query("custom", description=ENGINE_DESC)):
+    """t-SNE 2-D embeddings of test-set features."""
+    if model == "pytorch":
+        tsne_path = Path("results/metrics/pytorch_tsne_data.npz")
+    else:
+        tsne_path = Path("results/metrics/tsne_data.npz")
 
     if not tsne_path.exists():
         raise HTTPException(
             status_code=404,
             detail=(
-                "t-SNE data not pre-computed. "
-                "Run the visualization pipeline to generate results/metrics/tsne_data.npz."
+                f"t-SNE data not pre-computed for {model} engine. "
+                f"Expected: {tsne_path}"
             ),
         )
 
     try:
         data = np.load(tsne_path, allow_pickle=True)
-        coords = data["coords"]            # (N, 2)
-        labels = data["labels"]             # (N,)  — true class indices
-        predictions = data["predictions"]   # (N,)  — predicted class indices
-        confidences = data["confidences"]   # (N,)  — prediction confidence
+        coords = data["coords"]
+        labels = data["labels"]
+        predictions = data["predictions"]
+        confidences = data["confidences"]
         class_names = data["class_names"].tolist()
 
         n_samples = len(coords)
@@ -419,14 +405,11 @@ async def tsne():
     response_model=WhatIfResponse,
     tags=["What-If"],
 )
-async def what_if(body: WhatIfRequest):
-    """
-    Re-classify a modified spectrogram (What-If tool).
-
-    Send a 2-D spectrogram array and receive a new prediction.
-    Used by the frontend spectrogram editor to show how changes
-    in frequency content affect classification.
-    """
+async def what_if(
+    body: WhatIfRequest,
+    model: str = Query("custom", description=ENGINE_DESC),
+):
+    """Re-classify a modified spectrogram (What-If tool)."""
     if model_service.network is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -435,7 +418,7 @@ async def what_if(body: WhatIfRequest):
         if spec.ndim != 2:
             raise ValueError("Spectrogram must be a 2-D array")
 
-        result = model_service.classify_spectrogram(spec)
+        result = model_service.classify_spectrogram(spec, engine=model)
         return result
     except Exception as e:
         raise HTTPException(
