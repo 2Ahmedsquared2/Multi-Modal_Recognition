@@ -1,7 +1,7 @@
 # Step 21: FastAPI Backend Setup
 
 **Estimated Time:** 45 minutes
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 ---
 
@@ -9,16 +9,24 @@
 Create a FastAPI server that wraps the existing from-scratch neural network as a REST API. This is the bridge between the React frontend and the NumPy model.
 
 ## Tasks
-- [ ] Create `api/` directory with `__init__.py`
-- [ ] Create `api/server.py` — FastAPI app with CORS middleware
-- [ ] Create `api/model_service.py` — singleton that loads the trained model once at startup
-- [ ] Implement `GET /api/health` — returns server status
-- [ ] Implement `GET /api/model/info` — returns architecture, param count, accuracy, class names
-- [ ] Implement `POST /api/classify` — accepts audio file, returns prediction + confidence scores + spectrogram data
-- [ ] Implement `POST /api/spectrogram` — accepts audio file, returns spectrogram as base64 or JSON array
-- [ ] Add `fastapi`, `uvicorn`, `python-multipart` to `requirements.txt`
-- [ ] Test all endpoints with curl or the auto-generated Swagger docs at `/docs`
-- [ ] Verify model loads correctly from `models/model.npz`
+- [x] Create `api/` directory with `__init__.py`
+- [x] Create `api/server.py` — FastAPI app with CORS middleware
+- [x] Create `api/model_service.py` — singleton that loads the trained model once at startup
+- [x] Create `api/schemas.py` — Pydantic response models for all endpoints
+- [x] Implement `GET /api/health` — returns server status
+- [x] Implement `GET /api/model/info` — returns architecture, param count, accuracy, class names
+- [x] Implement `POST /api/classify` — accepts any audio format, returns prediction + confidence scores + spectrogram data
+- [x] Implement `POST /api/classify/live` — same as classify, for microphone input
+- [x] Implement `POST /api/spectrogram` — accepts audio file, returns 64×64 spectrogram as JSON array
+- [x] Implement `GET /api/model/confusion-matrix` — returns confusion matrix from test set
+- [x] Implement `GET /api/model/class-metrics` — returns per-class P/R/F1
+- [x] Implement `GET /api/model/training-history` — returns training curves (404 until data saved)
+- [x] Implement `GET /api/model/tsne` — returns t-SNE coordinates (404 until data saved)
+- [x] Implement `POST /api/what-if` — accepts modified spectrogram, returns new prediction
+- [x] Add `fastapi`, `uvicorn`, `python-multipart` to `requirements.txt`
+- [x] Test all endpoints with curl and Swagger docs
+- [x] Verify model loads correctly from `models/model.npz`
+- [x] Norm stats auto-extracted to `models/norm_stats.npz` on first startup
 
 ## Implementation Plan
 
@@ -85,12 +93,15 @@ uvicorn api.server:app --reload --port 8000
 ```
 
 ## Verification
-- [ ] `/api/health` returns 200
-- [ ] `/api/model/info` returns correct architecture info
-- [ ] `/api/classify` with a .wav file returns valid prediction
-- [ ] `/api/spectrogram` returns 64×64 array
-- [ ] CORS headers allow requests from localhost:5173
-- [ ] Model loads in <1 second at startup
+- [x] `/api/health` returns 200 — `{"status": "ok", "model_loaded": true}`
+- [x] `/api/model/info` returns correct architecture (4096→128→64→10, 533,322 params)
+- [x] `/api/classify` with guitar.wav returns `"guitar"` at 95.89% confidence
+- [x] `/api/spectrogram` returns 64×64 array
+- [x] `/api/model/confusion-matrix` returns 10×10 matrix
+- [x] `/api/model/class-metrics` returns per-class P/R/F1 (macro F1 = 0.9473)
+- [x] `/api/what-if` re-classifies a modified spectrogram correctly
+- [x] CORS headers allow requests from localhost:5173
+- [x] Model loads successfully at startup (test accuracy: 94.46%)
 
 ## Dependencies to Add
 ```

@@ -410,6 +410,18 @@ def main():
     # --- Stage 2: Training ---
     net, history, trainer = stage_train(args, data)
 
+    # --- Save training history for the web dashboard ---
+    metrics_dir = Path("results/metrics")
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        metrics_dir / "training_history.npz",
+        train_loss=np.array(history['train_loss']),
+        val_loss=np.array(history['val_loss']),
+        train_accuracy=np.array(history['train_accuracy']),
+        val_accuracy=np.array(history['val_accuracy']),
+    )
+    print(f"\n💾 Saved training history to: {metrics_dir / 'training_history.npz'}")
+
     # --- Stage 3: Evaluation ---
     results = stage_evaluate(args, net, data)
 

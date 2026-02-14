@@ -1,7 +1,7 @@
 # Step 25: Live Microphone Input
 
 **Estimated Time:** 60 minutes
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
 ---
 
@@ -11,19 +11,19 @@ Let users record audio directly from their microphone in the browser, send it to
 ## Tasks
 
 ### Frontend
-- [ ] Create `MicrophoneRecorder` component using Web Audio API
-- [ ] Request microphone permission (`navigator.mediaDevices.getUserMedia`)
-- [ ] Show live audio level meter while recording (visual feedback)
-- [ ] Record for exactly 2 seconds (matches model's expected duration)
-- [ ] Convert recorded audio to WAV format (client-side)
-- [ ] Send WAV blob to `POST /api/classify` (same endpoint as file upload)
-- [ ] Display results using the same results UI from Step 23
-- [ ] Add record button with visual states: idle → recording → processing → results
-- [ ] Handle permission denied gracefully (show message, fall back to upload)
+- [x] Create `MicrophoneRecorder` component using Web Audio API
+- [x] Request microphone permission (`navigator.mediaDevices.getUserMedia`)
+- [x] Show live audio level meter while recording (visual feedback)
+- [x] Record for exactly 2 seconds (matches model's expected duration)
+- [x] Convert recorded audio to WAV format (client-side)
+- [x] Send WAV blob to `POST /api/classify/live` endpoint
+- [x] Display results using the same results UI from Step 23
+- [x] Add record button with visual states: idle → requesting → recording → processing → error
+- [x] Handle permission denied gracefully (show message, fall back to upload)
 
 ### Backend
-- [ ] Ensure `/api/classify` handles WAV blobs from the mic (same as file upload)
-- [ ] Add `POST /api/classify/live` for shorter audio chunks if needed
+- [x] Ensure `/api/classify` handles WAV blobs from the mic (already worked)
+- [x] `POST /api/classify/live` endpoint (already existed from Step 21)
 
 ## Implementation Plan
 
