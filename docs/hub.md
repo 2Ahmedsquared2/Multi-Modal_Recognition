@@ -70,6 +70,30 @@ Track detailed notes, issues, and learnings for each implementation step:
 
 ---
 
+## 📁 Phase 2: Interactive Web Application
+
+> [📘 Phase 2 Steps](steps2.md) — Full implementation guide for the web app
+
+### Backend & Frontend Foundation
+- [Step 21: FastAPI Backend Setup](notes/step21_notes.md)
+- [Step 22: React + TypeScript Frontend Setup](notes/step22_notes.md)
+
+### Core Features
+- [Step 23: Audio Upload & Classification](notes/step23_notes.md)
+- [Step 24: Waveform & Spectrogram Display](notes/step24_notes.md)
+- [Step 25: Live Microphone Input](notes/step25_notes.md)
+- [Step 26: Processing Pipeline Animation](notes/step26_notes.md)
+
+### Interactive Visualizations
+- [Step 27: Interactive Training Dashboard](notes/step27_notes.md)
+- [Step 28: Interactive t-SNE & Feature Explorer](notes/step28_notes.md)
+
+### Advanced Features
+- [Step 29: What-If Tool](notes/step29_notes.md)
+- [Step 30: Polish & Deployment](notes/step30_notes.md)
+
+---
+
 ## 🚀 Quick Links
 
 ### When You Need To...
@@ -99,18 +123,30 @@ Track detailed notes, issues, and learnings for each implementation step:
 
 ## 📈 Project Status Overview
 
-**Current Phase:** Portfolio Materials (Step 16) — Testing complete
+**Current Phase:** Phase 2 — Interactive Web Application (Steps 21-30)
 **Target Completion:** [Add date]
-**Priority:** MVP with visual polish
+**Priority:** Visual polish & "wow factor" for USC IYA portfolio
 
-### Quick Status
+### Phase 1 Status (Complete)
 - [x] Environment & Setup
 - [x] Data Pipeline
 - [x] Neural Network Core
 - [x] Training System
 - [x] Visualizations
 - [x] Documentation
-- [ ] Portfolio Materials
+- [x] Testing (78 tests passing)
+
+### Phase 2 Status (In Progress)
+- [ ] FastAPI Backend (Step 21)
+- [ ] React + TS Frontend (Step 22)
+- [ ] Audio Upload & Classification (Step 23)
+- [ ] Waveform & Spectrogram Display (Step 24)
+- [ ] Live Microphone Input (Step 25)
+- [ ] Pipeline Animation (Step 26)
+- [ ] Interactive Training Dashboard (Step 27)
+- [ ] Interactive t-SNE Explorer (Step 28)
+- [ ] What-If Tool (Step 29)
+- [ ] Polish & Deployment (Step 30)
 
 ---
 
