@@ -48,6 +48,7 @@ class AudioLoader:
         self.n_samples = int(sample_rate * duration)
         self.augment = augment
         self.augment_prob = augment_prob
+        self.rng = np.random.default_rng(42)
         
         # Scan dataset
         self.class_names = []
@@ -136,7 +137,7 @@ class AudioLoader:
             Pitch-shifted audio
         """
         if n_steps is None:
-            n_steps = np.random.randint(-2, 3)  # -2 to +2 semitones
+            n_steps = self.rng.integers(-2, 3)  # -2 to +2 semitones
         
         if n_steps == 0:
             return audio
@@ -160,7 +161,7 @@ class AudioLoader:
             Time-stretched audio
         """
         if rate is None:
-            rate = np.random.uniform(0.8, 1.2)
+            rate = self.rng.uniform(0.8, 1.2)
         
         if rate == 1.0:
             return audio
@@ -190,9 +191,9 @@ class AudioLoader:
             Audio with added noise
         """
         if noise_level is None:
-            noise_level = np.random.uniform(0.001, 0.005)
+            noise_level = self.rng.uniform(0.001, 0.005)
         
-        noise = np.random.normal(0, noise_level, len(audio))
+        noise = self.rng.normal(0, noise_level, len(audio))
         return audio + noise
     
     def augment_audio(self, audio: np.ndarray) -> np.ndarray:
@@ -209,13 +210,13 @@ class AudioLoader:
             return audio
         
         # Randomly apply each augmentation
-        if np.random.random() < self.augment_prob:
+        if self.rng.random() < self.augment_prob:
             audio = self.pitch_shift(audio)
         
-        if np.random.random() < self.augment_prob:
+        if self.rng.random() < self.augment_prob:
             audio = self.time_stretch(audio)
         
-        if np.random.random() < self.augment_prob:
+        if self.rng.random() < self.augment_prob:
             audio = self.add_noise(audio)
         
         return audio
@@ -338,7 +339,7 @@ class AudioLoader:
         
         while True:
             if shuffle:
-                np.random.shuffle(indices)
+                self.rng.shuffle(indices)
             
             for i in range(0, len(indices), batch_size):
                 batch_indices = indices[i:i + batch_size]

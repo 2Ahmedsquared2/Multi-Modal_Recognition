@@ -250,7 +250,7 @@ class DataPreparator:
         indices = np.arange(n_samples)
         
         if shuffle:
-            np.random.shuffle(indices)
+            self.rng.shuffle(indices)
         
         for start in range(0, n_samples, batch_size):
             batch_idx = indices[start:start + batch_size]

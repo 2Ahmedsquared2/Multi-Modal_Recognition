@@ -93,6 +93,15 @@ class SpectrogramGenerator:
             
             mel_spec_resized = zoom(mel_spec_db, (height_ratio, width_ratio), order=1)
             
+            # Guard against off-by-one from floating-point zoom ratios
+            if mel_spec_resized.shape != self.target_shape:
+                mel_spec_resized = mel_spec_resized[:self.target_shape[0], :self.target_shape[1]]
+                # Pad if zoom undershot (rare but possible)
+                if mel_spec_resized.shape != self.target_shape:
+                    pad_h = self.target_shape[0] - mel_spec_resized.shape[0]
+                    pad_w = self.target_shape[1] - mel_spec_resized.shape[1]
+                    mel_spec_resized = np.pad(mel_spec_resized, ((0, pad_h), (0, pad_w)), mode='edge')
+            
             # Normalize to [0, 1] if requested
             if self.normalize:
                 mel_spec_resized = self._normalize_spectrogram(mel_spec_resized)
@@ -244,7 +253,7 @@ class SpectrogramGenerator:
         
         print(f"📂 Loading pre-generated spectrograms from: {file_path}")
         
-        data = np.load(file_path)
+        data = np.load(file_path, allow_pickle=True)
         spectrograms = data['spectrograms']
         labels = data['labels']
         class_names = data['class_names'].tolist()
