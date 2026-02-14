@@ -67,15 +67,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow frontend dev servers
+# CORS — allow frontend dev servers + deployed origins
+import os as _os
+
+_cors_origins = [
+    "http://localhost:5173",    # Vite dev server
+    "http://localhost:3000",    # Alternative React port
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
+
+# Add deployed frontend URL(s) from environment, comma-separated
+_extra_origins = _os.environ.get("CORS_ORIGINS", "")
+if _extra_origins:
+    _cors_origins.extend([o.strip() for o in _extra_origins.split(",") if o.strip()])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",    # Vite dev server
-        "http://localhost:3000",    # Alternative React port
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

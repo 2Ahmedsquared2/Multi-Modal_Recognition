@@ -79,18 +79,27 @@ const navItems = [
 
 /* ── Sidebar Component ── */
 
-export default function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const { theme, toggle } = useTheme();
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-60 flex flex-col
-      bg-white dark:bg-slate-900
-      border-r border-slate-200 dark:border-slate-800
-      z-40"
+    <aside
+      className={`fixed left-0 top-0 bottom-0 w-60 flex flex-col
+        bg-white dark:bg-slate-900
+        border-r border-slate-200 dark:border-slate-800
+        z-40
+        transition-transform duration-200 ease-out
+        ${open ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0`}
     >
       {/* Brand */}
-      <div className="px-5 pt-6 pb-4">
+      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Waveform logo mark */}
           <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center flex-shrink-0">
@@ -107,6 +116,17 @@ export default function Sidebar() {
             </p>
           </div>
         </div>
+
+        {/* Close button (mobile only) */}
+        <button
+          onClick={onClose}
+          className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Close navigation"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Thin separator */}
@@ -120,6 +140,7 @@ export default function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
                 transition-colors duration-150
                 ${isActive

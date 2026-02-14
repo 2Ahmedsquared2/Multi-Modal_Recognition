@@ -130,7 +130,7 @@ export default function Explorer() {
       {tsne && stats && (
         <>
           {/* ── Summary cards ── */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="card p-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
                 Test Samples
@@ -169,10 +169,10 @@ export default function Explorer() {
           </div>
 
           {/* ── Scatter + sidebar ── */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
             {/* ── Scatter plot (3/4 width) ── */}
-            <div className="col-span-3">
+            <div className="lg:col-span-3">
               <div className="card overflow-hidden">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
@@ -207,7 +207,7 @@ export default function Explorer() {
             </div>
 
             {/* ── Sidebar: Filters ── */}
-            <div className="col-span-1 space-y-4">
+            <div className="lg:col-span-1 space-y-4">
 
               {/* Class filters */}
               <div className="card p-4 space-y-3">

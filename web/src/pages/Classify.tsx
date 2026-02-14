@@ -121,8 +121,8 @@ export default function Classify() {
           Phase 1: Upload
           ═══════════════════════════════════════════════════════════════ */}
       {phase === 'upload' && (
-        <div className="grid grid-cols-5 gap-6">
-          <div className="col-span-3 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          <div className="md:col-span-3 space-y-4">
             {/* Drop zone */}
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -180,7 +180,7 @@ export default function Classify() {
           </div>
 
           {/* Placeholder right panel */}
-          <div className="col-span-2">
+          <div className="hidden md:block md:col-span-2">
             <div className="card p-8 flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-slate-400 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round">
@@ -257,8 +257,8 @@ export default function Classify() {
         <div className="space-y-8 animate-fade-in-up">
 
           {/* Top row: Prediction + Probabilities */}
-          <div className="grid grid-cols-5 gap-6">
-            <div className="col-span-3 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="md:col-span-3 space-y-4">
               {/* Prediction card */}
               <div className="card p-5 space-y-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
@@ -297,7 +297,7 @@ export default function Classify() {
             </div>
 
             {/* Right: Probabilities */}
-            <div className="col-span-2 space-y-4">
+            <div className="md:col-span-2 space-y-4">
               <div className="card p-5 space-y-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
                   All Probabilities

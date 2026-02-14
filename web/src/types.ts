@@ -86,3 +86,9 @@ export interface TSNEData {
   accuracy: number;
 }
 
+export interface WhatIfResponse {
+  prediction: string;
+  confidence: number;
+  all_confidences: Record<string, number>;
+}
+

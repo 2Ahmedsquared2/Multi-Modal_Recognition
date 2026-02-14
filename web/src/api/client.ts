@@ -6,6 +6,7 @@ import type {
   ClassMetricsResponse,
   TrainingHistory,
   TSNEData,
+  WhatIfResponse,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -26,12 +27,25 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// ── Simple in-memory cache for static data (model info, metrics, etc.) ──
+
+const cache = new Map<string, unknown>();
+
+async function cachedRequest<T>(endpoint: string): Promise<T> {
+  if (cache.has(endpoint)) {
+    return cache.get(endpoint) as T;
+  }
+  const data = await request<T>(endpoint);
+  cache.set(endpoint, data);
+  return data;
+}
+
 export const api = {
   health: () =>
     request<HealthResponse>('/api/health'),
 
   modelInfo: () =>
-    request<ModelInfo>('/api/model/info'),
+    cachedRequest<ModelInfo>('/api/model/info'),
 
   classify: (file: File) => {
     const form = new FormData();
@@ -61,21 +75,21 @@ export const api = {
   },
 
   confusionMatrix: () =>
-    request<ConfusionMatrix>('/api/model/confusion-matrix'),
+    cachedRequest<ConfusionMatrix>('/api/model/confusion-matrix'),
 
   classMetrics: () =>
-    request<ClassMetricsResponse>('/api/model/class-metrics'),
+    cachedRequest<ClassMetricsResponse>('/api/model/class-metrics'),
 
   trainingHistory: () =>
-    request<TrainingHistory>('/api/model/training-history'),
+    cachedRequest<TrainingHistory>('/api/model/training-history'),
 
   tsne: () =>
-    request<TSNEData>('/api/model/tsne'),
+    cachedRequest<TSNEData>('/api/model/tsne'),
 
-  whatIf: (spectrogram: number[][], modifications: Record<string, unknown>) =>
-    request<ClassifyResult>('/api/what-if', {
+  whatIf: (spectrogram: number[][]) =>
+    request<WhatIfResponse>('/api/what-if', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ spectrogram, modifications }),
+      body: JSON.stringify({ spectrogram }),
     }),
 };

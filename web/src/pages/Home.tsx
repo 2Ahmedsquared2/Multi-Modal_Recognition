@@ -104,7 +104,7 @@ export default function Home() {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
           Processing Pipeline
         </h2>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {pipelineStages.map((stage, i) => (
             <div key={stage.title} className="relative">
               <div className={`card p-4 ${stage.lightBg} border-transparent`}>
@@ -138,7 +138,7 @@ export default function Home() {
       </section>
 
       {/* ── Stats Row ── */}
-      <section className="grid grid-cols-4 gap-3">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Architecture', value: '3-Layer Dense', sub: 'ReLU + Softmax' },
           { label: 'Classes', value: health ? String(health.num_classes) : '10', sub: 'UrbanSound8K' },
@@ -164,7 +164,7 @@ export default function Home() {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
           Explore
         </h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {features.map((feat) => (
             <Link
               key={feat.path}
