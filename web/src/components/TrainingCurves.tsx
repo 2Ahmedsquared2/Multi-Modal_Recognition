@@ -37,25 +37,37 @@ export default function TrainingCurves({ history }: Props) {
     annotationLine: isDark ? 'rgba(248,113,113,0.5)' : 'rgba(239,68,68,0.4)',
   };
 
+  /* ── Calculate smart tick interval ── */
+  const tickInterval = useMemo(() => {
+    const numEpochs = history.epochs;
+    if (numEpochs <= 20) return 2;
+    if (numEpochs <= 50) return 5;
+    if (numEpochs <= 100) return 10;
+    return 20;
+  }, [history.epochs]);
+
   /* ── Shared layout props ── */
   const baseLayout: Partial<Plotly.Layout> = {
     paper_bgcolor: colors.paper,
     plot_bgcolor: colors.bg,
     font: { family: 'Inter, system-ui, sans-serif', color: colors.text, size: 11 },
-    margin: { t: 24, r: 16, b: 40, l: 48 },
+    margin: { t: 24, r: 16, b: 50, l: 48 },
     hovermode: 'x unified' as const,
     legend: {
       orientation: 'h' as const,
-      y: -0.18,
+      y: -0.25,
       x: 0.5,
       xanchor: 'center' as const,
-      font: { size: 10 },
+      font: { size: 9 },
       bgcolor: 'rgba(0,0,0,0)',
     },
     xaxis: {
       title: { text: 'Epoch', font: { size: 10 } },
       gridcolor: colors.grid,
       zeroline: false,
+      tickmode: 'linear' as const,
+      dtick: tickInterval,
+      tickfont: { size: 10 },
     },
   };
 
@@ -69,9 +81,14 @@ export default function TrainingCurves({ history }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
       {/* ── Loss Chart ── */}
       <div className="card p-5 space-y-3">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
-          Loss Over Epochs
-        </h3>
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+            Loss Over Epochs
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Tracks how well the model learns over time. Lower loss means better fit to the data.
+          </p>
+        </div>
         <Plot
           data={[
             {
@@ -132,9 +149,14 @@ export default function TrainingCurves({ history }: Props) {
 
       {/* ── Accuracy Chart ── */}
       <div className="card p-5 space-y-3">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
-          Accuracy Over Epochs
-        </h3>
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+            Accuracy Over Epochs
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Shows prediction accuracy on training and validation sets. Higher is better.
+          </p>
+        </div>
         <Plot
           data={[
             {

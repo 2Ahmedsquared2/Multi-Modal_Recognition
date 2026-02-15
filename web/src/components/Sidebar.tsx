@@ -147,21 +147,23 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 px-2 mb-2">
           Engine
         </p>
-        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+        <div className="relative flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+          {/* Sliding background indicator */}
+          <div 
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-md bg-white dark:bg-slate-700 shadow-sm
+              transition-transform duration-200 ease-out`}
+            style={{ transform: engine === 'pytorch' ? 'translateX(calc(100% + 8px))' : 'translateX(0)' }}
+          />
           {ENGINE_OPTIONS.map((opt) => {
             const active = engine === opt.value;
             return (
               <button
                 key={opt.value}
                 onClick={() => setEngine(opt.value)}
-                className={`flex-1 flex flex-col items-center py-2 px-1 rounded-md text-center
-                  transition-all duration-150
-                  ${active
-                    ? 'bg-white dark:bg-slate-700 shadow-sm'
-                    : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-                  }`}
+                className={`relative flex-1 flex flex-col items-center py-2.5 px-1 rounded-md text-center
+                  transition-colors duration-200 z-10`}
               >
-                <span className={`text-xs font-medium leading-none
+                <span className={`text-xs font-semibold leading-none transition-colors duration-200
                   ${active
                     ? 'text-indigo-600 dark:text-indigo-400'
                     : 'text-slate-500 dark:text-slate-400'
@@ -169,9 +171,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 >
                   {opt.label}
                 </span>
-                <span className={`text-[9px] mt-0.5 leading-none
+                <span className={`text-[9px] mt-1 leading-none transition-colors duration-200
                   ${active
-                    ? 'text-indigo-500/60 dark:text-indigo-400/50'
+                    ? 'text-indigo-500/70 dark:text-indigo-400/60'
                     : 'text-slate-400 dark:text-slate-600'
                   }`}
                 >

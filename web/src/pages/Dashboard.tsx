@@ -124,9 +124,6 @@ export default function Dashboard() {
               <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
                 {accuracy !== null ? `${(accuracy * 100).toFixed(1)}%` : '—'}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                On test set {confusion ? `(${confusion.class_names.length} classes)` : ''}
-              </p>
             </div>
 
             {/* Macro F1 */}

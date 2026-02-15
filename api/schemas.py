@@ -1,5 +1,5 @@
 """
-Pydantic Response Models for the Acoustic Pattern Recognition API.
+Pydantic Response Models for the Multi-Modal Pattern Recognition API.
 
 Every endpoint returns a typed, documented schema so FastAPI can
 auto-generate Swagger/OpenAPI docs at /docs.
@@ -7,6 +7,27 @@ auto-generate Swagger/OpenAPI docs at /docs.
 
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
+
+
+# ---------------------------------------------------------------------------
+# Dataset
+# ---------------------------------------------------------------------------
+
+class DatasetSummary(BaseModel):
+    """One entry in the datasets list."""
+    key: str
+    modality: str
+    name: str
+    description: str
+    num_classes: int
+    class_names: List[str]
+    ready: bool = False
+
+
+class DatasetListResponse(BaseModel):
+    """Response for GET /api/datasets."""
+    datasets: List[DatasetSummary]
+    active_dataset: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +40,7 @@ class HealthResponse(BaseModel):
     num_classes: Optional[int] = None
     classes: Optional[List[str]] = None
     available_engines: List[str] = []
+    active_dataset: Optional[str] = None
 
 
 class LayerInfo(BaseModel):
@@ -47,6 +69,7 @@ class ModelInfoResponse(BaseModel):
     macro_f1: Optional[float] = None
     engine: str = "custom"
     framework: str = "NumPy (from scratch)"
+    dataset: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -63,9 +86,10 @@ class ClassifyResponse(BaseModel):
     prediction: str
     confidence: float
     all_confidences: Dict[str, float]
-    spectrogram: List[List[float]]
-    waveform: List[float]
-    waveform_summary: WaveformSummary
+    spectrogram: List[List[float]]                         # 2D input: mel-spec (audio) or preprocessed image (image)
+    waveform: Optional[List[float]] = None                 # Audio only
+    waveform_summary: Optional[WaveformSummary] = None     # Audio only
+    modality: str = "audio"                                # "audio" or "image"
 
 
 # ---------------------------------------------------------------------------

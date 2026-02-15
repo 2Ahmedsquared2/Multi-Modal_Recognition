@@ -5,6 +5,7 @@ import type { WhatIfResponse } from '../types';
 import SpectrogramEditor from '../components/SpectrogramEditor';
 import type { BrushTool } from '../components/SpectrogramEditor';
 import AudioTrimmer from '../components/AudioTrimmer';
+import AudioInputZone from '../components/AudioInputZone';
 import MicrophoneRecorder from '../components/MicrophoneRecorder';
 
 // ── Confidence bar list ──────────────────────────────────────────────────
@@ -118,7 +119,6 @@ export default function WhatIf() {
   const [error, setError] = useState<string | null>(null);
   const [insight, setInsight] = useState('');
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const originalPredRef = useRef<WhatIfResponse | null>(null);
 
   // ── Phase 1a: User picks a file → go to trimmer ──
@@ -178,7 +178,6 @@ export default function WhatIf() {
     originalPredRef.current = null;
     setError(null);
     setInsight('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
   // ── Re-predict the modified spectrogram via /api/what-if ──
@@ -318,101 +317,11 @@ export default function WhatIf() {
           Phase 1: Upload / source selection
           ═══════════════════════════════════════════════════════════════════ */}
       {phase === 'upload' && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <div className="md:col-span-3 space-y-4">
-            {/* Drop zone */}
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="relative cursor-pointer rounded-xl border-2 border-dashed p-10
-                flex flex-col items-center justify-center text-center
-                transition-all duration-200
-                border-slate-300 dark:border-slate-800
-                hover:border-slate-400 dark:hover:border-slate-700"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="audio/*,.wav,.mp3,.ogg,.flac"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileSelected(file);
-                }}
-              />
-              <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <svg
-                  className="w-6 h-6 text-slate-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 16V3M12 3l4 4M12 3L8 7" />
-                  <path d="M2 17v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Drop audio file here
-              </p>
-              <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                or click to browse — WAV, MP3, OGG, FLAC
-              </p>
-            </div>
-
-            {/* Mic record button */}
-            <button
-              onClick={() => setPhase('recording')}
-              className="w-full py-3 rounded-xl text-sm font-medium
-                bg-slate-100 text-slate-600
-                dark:bg-slate-800 dark:text-slate-300
-                hover:bg-slate-200 dark:hover:bg-slate-700
-                transition-colors duration-150
-                flex items-center justify-center gap-2"
-            >
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="9" y="2" width="6" height="12" rx="3" />
-                <path d="M5 10a7 7 0 0 0 14 0M12 18v4M8 22h8" />
-              </svg>
-              Record from Microphone
-            </button>
-          </div>
-
-          {/* Placeholder right panel */}
-          <div className="hidden md:block md:col-span-2">
-            <div className="card p-8 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <svg
-                  className="w-8 h-8 text-slate-400 dark:text-slate-600"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 3v18M6 7v10M18 7v10M3 10v4M21 10v4M9 5v14M15 5v14" />
-                </svg>
-              </div>
-              <p className="text-sm text-slate-500 dark:text-slate-500">
-                Upload audio or record from your
-                <br />
-                microphone, then select a 2-second
-                <br />
-                segment to explore
-              </p>
-            </div>
-          </div>
-        </div>
+        <AudioInputZone
+          onFileSelected={handleFileSelected}
+          onRecordClick={() => setPhase('recording')}
+          statusHint="Upload or record audio, then select a 2-second segment to paint on and explore."
+        />
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════

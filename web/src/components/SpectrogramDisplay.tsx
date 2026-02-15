@@ -159,19 +159,24 @@ export default function SpectrogramDisplay({ spectrogram, duration }: Spectrogra
   }, [spectrogram, duration, nFreq, nTime]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
           Mel-Spectrogram
         </p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-600">
-          Frequency vs Time
-        </p>
+        <div className="flex items-center gap-1.5">
+          <svg className="w-3 h-3 text-slate-400 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <p className="text-[10px] text-slate-400 dark:text-slate-600">
+            Hover to explore
+          </p>
+        </div>
       </div>
-      <div ref={containerRef} className="relative">
+      <div ref={containerRef} className="relative flex-1">
         <canvas
           ref={canvasRef}
-          className="w-full h-32 rounded-lg"
+          className="w-full h-40 rounded-lg cursor-crosshair border border-slate-200/50 dark:border-slate-700/50"
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setTooltip(null)}
         />
@@ -179,7 +184,7 @@ export default function SpectrogramDisplay({ spectrogram, duration }: Spectrogra
           <div
             className="absolute pointer-events-none z-10 px-2 py-1 rounded-md text-[10px] font-mono
               bg-slate-900/90 text-slate-200 dark:bg-slate-800/95 dark:text-slate-300
-              whitespace-nowrap"
+              whitespace-nowrap shadow-lg"
             style={{ left: tooltip.x + 12, top: tooltip.y - 36 }}
           >
             <span className="text-indigo-400">{tooltip.time}</span>
@@ -191,7 +196,7 @@ export default function SpectrogramDisplay({ spectrogram, duration }: Spectrogra
         )}
       </div>
       <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center italic">
-        What the model sees — your audio transformed into a mel-spectrogram
+        What the model sees — your audio transformed into a visual pattern
       </p>
     </div>
   );

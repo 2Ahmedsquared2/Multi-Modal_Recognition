@@ -91,29 +91,12 @@ export default function Home() {
 
       {/* ── Header ── */}
       <header className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="badge-indigo">Research Project</span>
-          {health && <span className="badge-emerald">Model Loaded</span>}
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
-            ${isCustom
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
-              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
-            }`}
-          >
-            {engineLabel} Engine
-          </span>
-          {error && (
-            <span className="badge bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
-              Backend offline
-            </span>
-          )}
-        </div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           Acoustic Pattern Recognition Engine
         </h1>
         <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
           {isCustom
-            ? 'A neural network built from scratch — no PyTorch, no TensorFlow — that learns to recognize environmental sounds from their spectrograms. Every forward pass, every gradient, every weight update is hand-implemented in NumPy.'
+            ? 'A fully hand-engineered neural network — zero frameworks, zero shortcuts. Raw audio is decomposed into spectrograms and fed through a forward pass, backpropagation loop, and weight update cycle built entirely from first principles in NumPy. Every gradient is computed, every matrix is multiplied, every parameter is tuned — by code written from the ground up.'
             : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same dataset and architecture.'
           }
         </p>

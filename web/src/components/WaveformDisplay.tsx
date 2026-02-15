@@ -107,7 +107,7 @@ export default function WaveformDisplay({ waveform, duration }: WaveformDisplayP
   }, [waveform, duration]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
           Waveform
@@ -118,7 +118,7 @@ export default function WaveformDisplay({ waveform, duration }: WaveformDisplayP
       </div>
       <canvas
         ref={canvasRef}
-        className="w-full h-32 rounded-lg"
+        className="w-full h-40 rounded-lg"
       />
     </div>
   );

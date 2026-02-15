@@ -109,7 +109,7 @@ export default function TSNEPlot({
     (event: Plotly.PlotMouseEvent) => {
       const pt = event.points[0];
       if (pt?.customdata) {
-        const cd = pt.customdata as { idx: number };
+        const cd = pt.customdata as unknown as { idx: number };
         onSelect(cd.idx === selectedIdx ? null : cd.idx);
       }
     },
@@ -118,7 +118,8 @@ export default function TSNEPlot({
 
   return (
     <Plot
-      data={traces}
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      data={traces as any}
       layout={{
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',

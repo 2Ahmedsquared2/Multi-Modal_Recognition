@@ -81,32 +81,37 @@ export default function ConfusionMatrixChart({ data }: Props) {
   return (
     <div className="card p-5 space-y-4">
       {/* ── Header + Toggle ── */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
-          Confusion Matrix
-        </h3>
-        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
-          <button
-            onClick={() => setNormalized(false)}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
-              ${!normalized
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-          >
-            Counts
-          </button>
-          <button
-            onClick={() => setNormalized(true)}
-            className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
-              ${normalized
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-          >
-            Recall %
-          </button>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+            Confusion Matrix
+          </h3>
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+            <button
+              onClick={() => setNormalized(false)}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
+                ${!normalized
+                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+            >
+              Counts
+            </button>
+            <button
+              onClick={() => setNormalized(true)}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
+                ${normalized
+                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+            >
+              Recall %
+            </button>
+          </div>
         </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Visualizes correct predictions (diagonal) vs misclassifications. Darker colors indicate higher values.
+        </p>
       </div>
 
       {/* ── Heatmap ── */}

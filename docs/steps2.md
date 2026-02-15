@@ -53,9 +53,14 @@ React + TypeScript (Frontend)    ←→    FastAPI (Python Backend)    ←→   
 | 29 | What-If Tool | 90 min | Canvas-based spectrogram editor: paint/erase frequency regions, re-predict in real time, before/after comparison |
 | 30 | Polish & Deployment | 60 min | Responsive design, loading states, error handling, deploy frontend + backend to the web |
 
+### Dual Engine Comparison
+| Step | Title | Est. Time | Description |
+|------|-------|-----------|-------------|
+| 31 | PyTorch Comparison Engine | 90 min | Implement PyTorch version of the neural network, dual-model API support, frontend engine toggle to compare custom NumPy vs PyTorch performance |
+
 ---
 
-## Estimated Total Time: ~9 hours
+## Estimated Total Time: ~10.5 hours
 
 ---
 
@@ -88,15 +93,17 @@ React + TypeScript (Frontend)    ←→    FastAPI (Python Backend)    ←→   
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/health` | Health check |
-| GET | `/api/model/info` | Architecture, param count, accuracy |
-| GET | `/api/model/training-history` | Training curves data (JSON) |
-| GET | `/api/model/confusion-matrix` | Confusion matrix data (JSON) |
-| GET | `/api/model/tsne` | t-SNE coordinates + metadata (JSON) |
-| GET | `/api/model/class-metrics` | Per-class P/R/F1 (JSON) |
-| POST | `/api/classify` | Upload audio → prediction + confidence + spectrogram |
-| POST | `/api/classify/live` | Stream audio chunk → prediction |
+| GET | `/api/model/info?model=custom` | Architecture, param count, accuracy (supports `?model=pytorch`) |
+| GET | `/api/model/training-history?model=custom` | Training curves data (JSON) (supports `?model=pytorch`) |
+| GET | `/api/model/confusion-matrix?model=custom` | Confusion matrix data (JSON) (supports `?model=pytorch`) |
+| GET | `/api/model/tsne?model=custom` | t-SNE coordinates + metadata (JSON) (supports `?model=pytorch`) |
+| GET | `/api/model/class-metrics?model=custom` | Per-class P/R/F1 (JSON) (supports `?model=pytorch`) |
+| POST | `/api/classify?model=custom` | Upload audio → prediction + confidence + spectrogram (supports `?model=pytorch`) |
+| POST | `/api/classify/live?model=custom` | Stream audio chunk → prediction (supports `?model=pytorch`) |
 | POST | `/api/spectrogram` | Upload audio → spectrogram image data |
-| POST | `/api/what-if` | Modified spectrogram → re-prediction |
+| POST | `/api/what-if?model=custom` | Modified spectrogram → re-prediction (supports `?model=pytorch`) |
+
+**Note:** All model-specific endpoints support the `?model=custom` or `?model=pytorch` query parameter to select the inference engine.
 
 ---
 
@@ -115,13 +122,15 @@ Step 24 (Waveform Display) ─────────────────�
                                                   │
                                                   └──→ Step 29 (What-If Tool)
                                                             │
-                                                            └──→ Step 30 (Polish & Deploy)
+                                                            ├──→ Step 30 (Polish & Deploy)
+                                                            │
+                                                            └──→ Step 31 (PyTorch Engine)
 ```
 
 Steps 21-22 must come first (backend + frontend scaffold).
 Step 23 is the first end-to-end feature.
-Steps 24-29 can be done in the listed order (each builds on the previous).
-Step 30 is always last.
+Steps 24-30 can be done in the listed order (each builds on the previous).
+Step 31 can be done anytime after Step 23 (adds parallel PyTorch model).
 
 ---
 
@@ -131,6 +140,8 @@ Step 30 is always last.
 - [ ] Microphone input works in Chrome/Safari
 - [ ] All visualizations are interactive (hover, click, zoom)
 - [ ] What-If tool lets you modify a spectrogram and see prediction change
+- [ ] Frontend includes a toggle to switch between custom NumPy and PyTorch engines
+- [ ] Both engines produce consistent predictions on the same input
 - [ ] Looks polished and professional on desktop
 - [ ] Loads fast, handles errors gracefully
 - [ ] Deployed and accessible via a public URL
@@ -142,9 +153,12 @@ Step 30 is always last.
 ### What stays the same
 - All existing Python code (model, preprocessing, training) is untouched
 - FastAPI just wraps the existing functions as API endpoints
-- The model weights are loaded from `models/model.npz`
+- The model weights are loaded from `models/model.npz` (custom) and `models/pytorch_model.pt` (PyTorch)
 
 ### What's new
 - `web/` directory for the React frontend
-- `api/` directory (or `server.py`) for the FastAPI backend
+- `api/` directory for the FastAPI backend
+- `src/pytorch_model/` directory with PyTorch implementation
 - New visualization data endpoints that return JSON instead of saving PNGs
+- Engine selection toggle in the frontend sidebar
+- Dual-model comparison capability across all features
