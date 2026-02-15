@@ -128,7 +128,12 @@ def stage_preprocess(args, config) -> dict:
         print(f"\n❌ Image directory not found: {image_dir}")
         print(f"   Expected structure: {image_dir}/<class_name>/<images>")
         print(f"\n   Download the dataset first:")
-        print(f"     python download_image_dataset.py")
+        if subset == "medical":
+            print(f"     python download_medical_image.py")
+        elif subset == "wildlife":
+            print(f"     python download_image_dataset.py")
+        else:
+            print(f"     (download script for {subset} not yet available)")
         sys.exit(1)
 
     # Step A: Scan images
