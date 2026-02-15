@@ -6,6 +6,28 @@
 
 ---
 
+## 📑 Table of Contents
+
+- [Project Overview](#-project-overview)
+- [Results Summary](#-results-summary)
+- [Architecture](#️-architecture)
+- [Quick Start](#-quick-start)
+- [Visualizations & Features](#-visualizations--features)
+- [What's Built From Scratch](#-whats-built-from-scratch)
+- [Datasets](#-datasets)
+- [Project Structure](#️-project-structure)
+- [Technical Documentation](#-technical-documentation)
+- [Technology Stack](#-technology-stack)
+- [Key Technical Highlights](#-key-technical-highlights)
+- [Development Phases](#-development-phases)
+- [Performance Metrics](#-performance-metrics)
+- [Educational Value](#-educational-value)
+- [Potential Extensions](#-potential-extensions)
+- [License & Citation](#-license--citation)
+- [Acknowledgments](#-acknowledgments)
+
+---
+
 ## 🎯 Project Overview
 
 This project evolved through three major phases:
