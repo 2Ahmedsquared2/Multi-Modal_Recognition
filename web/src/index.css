@@ -25,20 +25,15 @@
 }
 
 @layer utilities {
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out both;
-  }
-  .animate-fade-in-up {
-    animation: fade-in-up 0.4s ease-out both;
-  }
+  /* ── Staggered entrance animations ──
+     Apply to child sections for a cascading reveal effect.
+     Uses the fadeInUp keyframe from tailwind.config.js. */
+  .stagger-1 { animation: fadeInUp 0.4s ease-out 0ms both; }
+  .stagger-2 { animation: fadeInUp 0.4s ease-out 75ms both; }
+  .stagger-3 { animation: fadeInUp 0.4s ease-out 150ms both; }
+  .stagger-4 { animation: fadeInUp 0.4s ease-out 225ms both; }
+  .stagger-5 { animation: fadeInUp 0.4s ease-out 300ms both; }
+  .stagger-6 { animation: fadeInUp 0.4s ease-out 375ms both; }
 }
 
 @layer components {
@@ -48,7 +43,9 @@
 
   .card-hover {
     @apply bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl
-           transition-all duration-200 hover:border-slate-400 dark:hover:border-slate-700;
+           transition-all duration-200
+           hover:border-slate-400 dark:hover:border-slate-700
+           hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50;
   }
 
   .badge {
@@ -63,5 +60,23 @@
   .badge-emerald {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
            bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400;
+  }
+
+  /* ── Skeleton loader ── */
+  .skeleton {
+    @apply rounded-lg bg-slate-200 dark:bg-slate-800 animate-pulse;
+  }
+}
+
+/* ── Accessibility: respect reduced motion preferences ──
+   Disables all animations & transitions for users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

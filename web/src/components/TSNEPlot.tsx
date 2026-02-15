@@ -3,24 +3,34 @@ import { useDarkMode } from '../hooks/useDarkMode';
 import { useMemo, useCallback } from 'react';
 import type { TSNEPoint } from '../types';
 
-/* ── 10-class color palette ── */
-const CLASS_COLORS: Record<string, string> = {
-  bass:     '#38bdf8', // sky-400
-  brass:    '#fb7185', // rose-400
-  flute:    '#fbbf24', // amber-400
-  guitar:   '#fb923c', // orange-400
-  keyboard: '#94a3b8', // slate-400
-  mallet:   '#a78bfa', // violet-400
-  organ:    '#ef4444', // red-500
-  reed:     '#2dd4bf', // teal-400
-  string:   '#34d399', // emerald-400
-  vocal:    '#818cf8', // indigo-400
-};
+/* ── Dynamic color palette (works for any number of classes) ── */
+const PALETTE = [
+  '#38bdf8', // sky-400
+  '#fb7185', // rose-400
+  '#fbbf24', // amber-400
+  '#fb923c', // orange-400
+  '#a78bfa', // violet-400
+  '#34d399', // emerald-400
+  '#818cf8', // indigo-400
+  '#2dd4bf', // teal-400
+  '#ef4444', // red-500
+  '#94a3b8', // slate-400
+  '#f472b6', // pink-400
+  '#60a5fa', // blue-400
+  '#4ade80', // green-400
+  '#c084fc', // purple-400
+  '#facc15', // yellow-400
+];
 
 const FALLBACK_COLOR = '#94a3b8';
 
-function colorFor(label: string): string {
-  return CLASS_COLORS[label] ?? FALLBACK_COLOR;
+/** Build a color map from class names using the palette */
+function buildColorMap(classNames: string[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  classNames.forEach((cls, i) => {
+    map[cls] = PALETTE[i % PALETTE.length];
+  });
+  return map;
 }
 
 /* ── Incorrect marker: diamond shape ── */
@@ -48,6 +58,9 @@ export default function TSNEPlot({
   const textColor = isDark ? '#94a3b8' : '#64748b';
   const gridColor = isDark ? 'rgba(148,163,184,0.08)' : 'rgba(100,116,139,0.1)';
 
+  /* ── Build dynamic color map from classNames ── */
+  const colorMap = useMemo(() => buildColorMap(classNames), [classNames]);
+
   /* ── Filter points based on class visibility + error filter ── */
   const filtered = useMemo(() => {
     return points
@@ -62,7 +75,7 @@ export default function TSNEPlot({
       .filter((cls) => visibleClasses.has(cls))
       .map((cls) => {
         const classPoints = filtered.filter((p) => p.class_name === cls);
-        const color = colorFor(cls);
+        const color = colorMap[cls] ?? FALLBACK_COLOR;
 
         return {
           x: classPoints.map((p) => p.x),
@@ -102,7 +115,7 @@ export default function TSNEPlot({
             '<extra></extra>',
         };
       });
-  }, [classNames, visibleClasses, filtered, selectedIdx, isDark]);
+  }, [classNames, visibleClasses, filtered, selectedIdx, isDark, colorMap]);
 
   /* ── Click handler ── */
   const handleClick = useCallback(

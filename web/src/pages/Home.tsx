@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useModel } from '../contexts/ModelContext';
 import type { HealthResponse, ModelInfo } from '../types';
 
-/* ── Pipeline stage data ── */
+/* ── Pipeline stages per modality ── */
 
-const pipelineStages = [
+const audioPipeline = [
   {
     title: 'Audio Input',
     detail: 'Raw .wav file',
@@ -37,7 +37,40 @@ const pipelineStages = [
   },
 ];
 
-const features = [
+const imagePipeline = [
+  {
+    title: 'Image Input',
+    detail: 'JPG / PNG file',
+    mono: 'img[h,w,c]',
+    color: 'bg-sky-500',
+    lightBg: 'bg-sky-50 dark:bg-sky-500/5',
+  },
+  {
+    title: 'Preprocess',
+    detail: 'Resize & normalize',
+    mono: '64×64 matrix',
+    color: 'bg-violet-500',
+    lightBg: 'bg-violet-50 dark:bg-violet-500/5',
+  },
+  {
+    title: 'Neural Network',
+    detail: '3-layer dense',
+    mono: 'f(Wx + b)',
+    color: 'bg-indigo-500',
+    lightBg: 'bg-indigo-50 dark:bg-indigo-500/5',
+  },
+  {
+    title: 'Classification',
+    detail: 'N categories',
+    mono: 'argmax(p)',
+    color: 'bg-emerald-500',
+    lightBg: 'bg-emerald-50 dark:bg-emerald-500/5',
+  },
+];
+
+/* ── Feature cards per modality ── */
+
+const audioFeatures = [
   {
     path: '/classify',
     title: 'Classify Audio',
@@ -64,46 +97,108 @@ const features = [
   },
 ];
 
+const imageFeatures = [
+  {
+    path: '/classify',
+    title: 'Classify Image',
+    description: 'Upload an image and see what the neural network identifies in the visual pattern.',
+    accent: 'group-hover:text-sky-500',
+  },
+  {
+    path: '/dashboard',
+    title: 'Training Dashboard',
+    description: 'Explore training curves, loss landscapes, and the confusion matrix interactively.',
+    accent: 'group-hover:text-violet-500',
+  },
+  {
+    path: '/explorer',
+    title: 'Feature Explorer',
+    description: 'Visualize how the network organizes images in high-dimensional feature space via t-SNE.',
+    accent: 'group-hover:text-indigo-500',
+  },
+  {
+    path: '/what-if',
+    title: 'What-If Analysis',
+    description: 'Paint on the preprocessed input and observe how changes shift the network\'s predictions.',
+    accent: 'group-hover:text-emerald-500',
+  },
+];
+
 /* ── Component ── */
 
 export default function Home() {
-  const { engine, engineLabel } = useModel();
+  const { engine, modality, dataset, activeDataset } = useModel();
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [error, setError] = useState(false);
 
+  // Health check (always works, good fallback for class list)
   useEffect(() => {
     api.health()
       .then(setHealth)
-      .catch(() => setError(true));
+      .catch(() => {});
   }, []);
 
+  // Model info (re-fetch on engine/dataset change)
   useEffect(() => {
-    api.modelInfo(engine)
-      .then(setModelInfo)
-      .catch(() => {});
-  }, [engine]);
+    let cancelled = false;
+    api.modelInfo(engine, dataset)
+      .then((info) => { if (!cancelled) setModelInfo(info); })
+      .catch(() => { if (!cancelled) setError(true); });
+    return () => { cancelled = true; };
+  }, [engine, dataset]);
 
   const isCustom = engine === 'custom';
+  const isAudio = modality === 'audio';
+  const datasetLabel = activeDataset?.name ?? dataset;
+  const numClasses = activeDataset?.num_classes ?? modelInfo?.class_names?.length ?? health?.num_classes ?? '—';
+  const classNames = activeDataset?.class_names ?? modelInfo?.class_names ?? health?.classes ?? [];
+
+  const pipelineStages = useMemo(
+    () => (isAudio ? audioPipeline : imagePipeline),
+    [isAudio],
+  );
+
+  const features = useMemo(
+    () => (isAudio ? audioFeatures : imageFeatures),
+    [isAudio],
+  );
+
+  /* Classes subtitle — use the registry name, which is "Instrument Families" for audio/music */
+  const classesSubtitle = datasetLabel;
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-10 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-8 py-10 space-y-12">
 
       {/* ── Header ── */}
-      <header className="space-y-3">
+      <header className="stagger-1 space-y-3">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Acoustic Pattern Recognition Engine
+          {isAudio ? 'Acoustic Pattern Recognition Engine' : 'Visual Pattern Recognition Engine'}
         </h1>
         <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-          {isCustom
-            ? 'A fully hand-engineered neural network — zero frameworks, zero shortcuts. Raw audio is decomposed into spectrograms and fed through a forward pass, backpropagation loop, and weight update cycle built entirely from first principles in NumPy. Every gradient is computed, every matrix is multiplied, every parameter is tuned — by code written from the ground up.'
-            : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same dataset and architecture.'
+          {isAudio
+            ? (isCustom
+                ? 'A fully hand-engineered neural network — zero frameworks, zero shortcuts. Raw audio is decomposed into spectrograms and fed through a forward pass, backpropagation loop, and weight update cycle built entirely from first principles in NumPy. Every gradient is computed, every matrix is multiplied, every parameter is tuned — by code written from the ground up.'
+                : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same dataset and architecture.'
+              )
+            : (isCustom
+                ? 'A fully hand-engineered neural network applied to visual data — zero frameworks, zero shortcuts. Images are preprocessed and fed through a forward pass, backpropagation loop, and weight update cycle built entirely from first principles in NumPy.'
+                : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same image dataset and architecture.'
+              )
           }
         </p>
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">
+            {isAudio ? 'Audio' : 'Image'}
+          </span>
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            {datasetLabel}
+          </span>
+        </div>
       </header>
 
       {/* ── Pipeline Visualization ── */}
-      <section className="space-y-4">
+      <section className="stagger-2 space-y-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
           Processing Pipeline
         </h2>
@@ -141,10 +236,14 @@ export default function Home() {
       </section>
 
       {/* ── Stats Row ── */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <section className="stagger-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Architecture', value: '3-Layer Dense', sub: 'ReLU + Softmax' },
-          { label: 'Classes', value: health ? String(health.num_classes) : '10', sub: 'Instrument families' },
+          {
+            label: 'Classes',
+            value: String(numClasses),
+            sub: classesSubtitle,
+          },
           {
             label: 'Implementation',
             value: isCustom ? 'Pure NumPy' : 'PyTorch',
@@ -157,7 +256,7 @@ export default function Home() {
               : '—',
             sub: modelInfo
               ? `${modelInfo.parameters.toLocaleString()} params`
-              : 'Loading...',
+              : error ? 'Model not loaded' : 'Loading…',
           },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
@@ -175,7 +274,7 @@ export default function Home() {
       </section>
 
       {/* ── Feature Cards ── */}
-      <section className="space-y-4">
+      <section className="stagger-4 space-y-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
           Explore
         </h2>
@@ -194,9 +293,9 @@ export default function Home() {
                   {feat.description}
                 </p>
               </div>
-              <div className="mt-4 flex items-center text-xs font-medium text-slate-500 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
+              <div className="mt-4 flex items-center text-xs font-medium text-slate-500 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors duration-150">
                 Open
-                <svg className="ml-1 w-3 h-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="ml-1 w-3 h-3 transition-transform duration-200 group-hover:translate-x-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2.5 6h7M6.5 3l3 3-3 3" />
                 </svg>
               </div>
@@ -206,16 +305,16 @@ export default function Home() {
       </section>
 
       {/* ── Classes Preview ── */}
-      {health && health.classes && health.classes.length > 0 && (
-        <section className="space-y-4">
+      {classNames.length > 0 && (
+        <section className="stagger-5 space-y-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
-            Recognized Sound Classes
+            {isAudio ? 'Recognized Sound Classes' : 'Recognized Image Classes'}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {health.classes.map((cls) => (
+            {classNames.map((cls) => (
               <span
                 key={cls}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg
+                className="px-3 py-1.5 text-xs font-medium rounded-lg capitalize
                   bg-slate-100 text-slate-600
                   dark:bg-slate-800 dark:text-slate-300"
               >

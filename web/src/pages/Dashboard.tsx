@@ -18,13 +18,16 @@ interface ClassMetricRow extends ClassMetric {
 }
 
 export default function Dashboard() {
-  const { engine, engineLabel } = useModel();
+  const { engine, engineLabel, dataset, modality, activeDataset } = useModel();
   const [confusion, setConfusion] = useState<ConfusionMatrix | null>(null);
   const [metricsResp, setMetricsResp] = useState<ClassMetricsResponse | null>(null);
   const [history, setHistory] = useState<TrainingHistory | null>(null);
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const isAudio = modality === 'audio';
+  const datasetLabel = activeDataset?.name ?? dataset;
 
   useEffect(() => {
     setLoading(true);
@@ -35,10 +38,10 @@ export default function Dashboard() {
     setModelInfo(null);
 
     Promise.allSettled([
-      api.confusionMatrix(engine),
-      api.classMetrics(engine),
-      api.trainingHistory(engine),
-      api.modelInfo(engine),
+      api.confusionMatrix(engine, dataset),
+      api.classMetrics(engine, dataset),
+      api.trainingHistory(engine, dataset),
+      api.modelInfo(engine, dataset),
     ]).then(([cm, met, hist, info]) => {
       if (cm.status === 'fulfilled') setConfusion(cm.value);
       if (met.status === 'fulfilled') setMetricsResp(met.value);
@@ -49,7 +52,7 @@ export default function Dashboard() {
       setError(true);
       setLoading(false);
     });
-  }, [engine]);
+  }, [engine, dataset]);
 
   /* ── Transform per_class Record → sorted array ── */
   let metrics: ClassMetricRow[] | null = null;
@@ -79,11 +82,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 space-y-8">
 
       {/* Header */}
-      <header className="space-y-2">
-        <div className="flex items-center gap-2">
+      <header className="stagger-1 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Training Dashboard
           </h1>
@@ -95,16 +98,44 @@ export default function Dashboard() {
           >
             {engineLabel}
           </span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            {datasetLabel}
+          </span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {engineLabel} model performance metrics, interactive training curves, and the confusion matrix.
+          {engineLabel} model performance on the <span className="font-medium">{datasetLabel}</span> dataset
+          — training curves, confusion matrix, and per-class metrics.
         </p>
       </header>
 
       {loading ? (
-        <div className="flex items-center gap-3 py-20 justify-center">
-          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-slate-500">Loading metrics...</span>
+        <div className="space-y-8 stagger-2">
+          {/* Skeleton: Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="card p-5 space-y-3">
+                <div className="skeleton h-3 w-20" />
+                <div className="skeleton h-8 w-24" />
+                <div className="skeleton h-3 w-16" />
+              </div>
+            ))}
+          </div>
+          {/* Skeleton: Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="card p-5 space-y-3">
+              <div className="skeleton h-3 w-28" />
+              <div className="skeleton h-48 w-full" />
+            </div>
+            <div className="card p-5 space-y-3">
+              <div className="skeleton h-3 w-28" />
+              <div className="skeleton h-48 w-full" />
+            </div>
+          </div>
+          {/* Skeleton: Bottom row */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+            <div className="card p-5"><div className="skeleton h-64 w-full" /></div>
+            <div className="card p-5"><div className="skeleton h-64 w-full" /></div>
+          </div>
         </div>
       ) : error ? (
         <div className="card p-8 text-center">
@@ -115,7 +146,7 @@ export default function Dashboard() {
       ) : (
         <>
           {/* ── Summary Cards Row ── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="stagger-2 grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Accuracy */}
             <div className="card p-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
@@ -135,7 +166,7 @@ export default function Dashboard() {
                 {metricsResp?.macro_f1 != null ? (metricsResp.macro_f1 * 100).toFixed(1) + '%' : '—'}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                Across all classes
+                Across {activeDataset ? activeDataset.num_classes : 'all'} classes
               </p>
             </div>
 
@@ -148,7 +179,7 @@ export default function Dashboard() {
                 const best = metrics.reduce((a, b) => a.f1_score > b.f1_score ? a : b);
                 return (
                   <>
-                    <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{best.class_name}</p>
+                    <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white capitalize">{best.class_name}</p>
                     <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">F1: {(best.f1_score * 100).toFixed(1)}%</p>
                   </>
                 );
@@ -179,7 +210,7 @@ export default function Dashboard() {
 
           {/* ── Architecture Details (collapsible summary) ── */}
           {modelInfo && (
-            <details className="card group">
+            <details className="stagger-3 card group">
               <summary className="px-5 py-4 cursor-pointer flex items-center justify-between
                 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500
                 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
@@ -208,9 +239,14 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-600">
-                  Input: {modelInfo.spectrogram_shape.join('×')} spectrogram
-                  {' · '}
-                  {modelInfo.audio_duration}s @ {(modelInfo.sample_rate / 1000).toFixed(1)}kHz
+                  Input: {modelInfo.spectrogram_shape.join('×')}{' '}
+                  {isAudio ? 'spectrogram' : 'preprocessed image'}
+                  {isAudio && modelInfo.audio_duration > 0 && (
+                    <>
+                      {' · '}
+                      {modelInfo.audio_duration}s @ {(modelInfo.sample_rate / 1000).toFixed(1)}kHz
+                    </>
+                  )}
                 </p>
               </div>
             </details>
@@ -218,9 +254,9 @@ export default function Dashboard() {
 
           {/* ── Training Curves ── */}
           {history ? (
-            <TrainingCurves history={history} />
+            <div className="stagger-4"><TrainingCurves history={history} /></div>
           ) : (
-            <section className="grid grid-cols-2 gap-3">
+            <section className="stagger-4 grid grid-cols-2 gap-3">
               <div className="card p-5 space-y-3">
                 <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
                   Loss Over Epochs
@@ -245,7 +281,7 @@ export default function Dashboard() {
           )}
 
           {/* ── Confusion Matrix + Class Metrics (side-by-side on large screens) ── */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+          <div className="stagger-5 grid grid-cols-1 xl:grid-cols-2 gap-3">
             {/* Confusion Matrix */}
             {confusion ? (
               <ConfusionMatrixChart data={confusion} />

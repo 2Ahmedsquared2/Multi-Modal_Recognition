@@ -4,24 +4,26 @@ import { useModel } from '../contexts/ModelContext';
 import type { TSNEData, TSNEPoint } from '../types';
 import TSNEPlot from '../components/TSNEPlot';
 
-/* ── Color map (hex) — must stay in sync with TSNEPlot ── */
-const CLASS_COLORS: Record<string, string> = {
-  bass:     '#38bdf8',
-  brass:    '#fb7185',
-  flute:    '#fbbf24',
-  guitar:   '#fb923c',
-  keyboard: '#94a3b8',
-  mallet:   '#a78bfa',
-  organ:    '#ef4444',
-  reed:     '#2dd4bf',
-  string:   '#34d399',
-  vocal:    '#818cf8',
-};
+/* ── Dynamic color palette (same as TSNEPlot) ── */
+const PALETTE = [
+  '#38bdf8', '#fb7185', '#fbbf24', '#fb923c', '#a78bfa',
+  '#34d399', '#818cf8', '#2dd4bf', '#ef4444', '#94a3b8',
+  '#f472b6', '#60a5fa', '#4ade80', '#c084fc', '#facc15',
+];
 
 const FALLBACK_COLOR = '#94a3b8';
 
+function colorFor(classNames: string[], label: string): string {
+  const idx = classNames.indexOf(label);
+  if (idx === -1) return FALLBACK_COLOR;
+  return PALETTE[idx % PALETTE.length];
+}
+
 export default function Explorer() {
-  const { engine, engineLabel } = useModel();
+  const { engine, engineLabel, dataset, modality, activeDataset } = useModel();
+
+  const isAudio = modality === 'audio';
+  const datasetLabel = activeDataset?.name ?? dataset;
 
   /* ── Data ── */
   const [tsne, setTsne] = useState<TSNEData | null>(null);
@@ -33,21 +35,21 @@ export default function Explorer() {
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  /* ── Fetch (re-fetch when engine changes) ── */
+  /* ── Fetch (re-fetch when engine or dataset changes) ── */
   useEffect(() => {
     setLoading(true);
     setError(false);
     setTsne(null);
     setSelectedIdx(null);
 
-    api.tsne(engine)
+    api.tsne(engine, dataset)
       .then((data) => {
         setTsne(data);
         setVisibleClasses(new Set(data.class_names));
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [engine]);
+  }, [engine, dataset]);
 
   /* ── Derived stats ── */
   const stats = useMemo(() => {
@@ -101,11 +103,11 @@ export default function Explorer() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-8 py-10 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 space-y-6">
 
       {/* ── Header ── */}
-      <header className="space-y-2">
-        <div className="flex items-center gap-2">
+      <header className="stagger-1 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Feature Explorer
           </h1>
@@ -117,18 +119,44 @@ export default function Explorer() {
           >
             {engineLabel}
           </span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            {datasetLabel}
+          </span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          t-SNE visualization of how the {engineLabel} neural network organizes different sounds in
-          its learned feature space. Points that cluster together sound similar to the network.
+          t-SNE visualization of how the {engineLabel} neural network organizes different{' '}
+          {isAudio ? 'sounds' : 'images'} in its learned feature space.
+          Points that cluster together were encoded similarly by the network.
         </p>
       </header>
 
-      {/* ── Loading ── */}
+      {/* ── Loading skeleton ── */}
       {loading && (
-        <div className="flex items-center gap-3 py-20 justify-center">
-          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-slate-500">Loading t-SNE data...</span>
+        <div className="stagger-2 space-y-6">
+          {/* Skeleton: Summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="card p-4 space-y-3">
+                <div className="skeleton h-3 w-20" />
+                <div className="skeleton h-7 w-16" />
+                <div className="skeleton h-3 w-24" />
+              </div>
+            ))}
+          </div>
+          {/* Skeleton: Scatter + sidebar */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-3 card p-4">
+              <div className="skeleton h-[520px] w-full" />
+            </div>
+            <div className="lg:col-span-1 space-y-4">
+              <div className="card p-4 space-y-2">
+                <div className="skeleton h-3 w-16" />
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="skeleton h-5 w-full" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -136,10 +164,10 @@ export default function Explorer() {
       {error && (
         <div className="card p-8 text-center space-y-2">
           <p className="text-sm text-slate-500 dark:text-slate-500">
-            t-SNE data not available yet.
+            t-SNE data not available for this dataset yet.
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-600">
-            Run <code className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">python generate_tsne.py</code> to generate the data.
+            Train the model first, then the t-SNE data will be generated.
           </p>
         </div>
       )}
@@ -148,7 +176,7 @@ export default function Explorer() {
       {tsne && stats && (
         <>
           {/* ── Summary cards ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="stagger-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="card p-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
                 Test Samples
@@ -157,7 +185,7 @@ export default function Explorer() {
                 {stats.total}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
-                {tsne.class_names.length} instrument classes
+                {tsne.class_names.length} classes
               </p>
             </div>
 
@@ -187,7 +215,7 @@ export default function Explorer() {
           </div>
 
           {/* ── Scatter + sidebar ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="stagger-3 grid grid-cols-1 lg:grid-cols-4 gap-4">
 
             {/* ── Scatter plot (3/4 width) ── */}
             <div className="lg:col-span-3">
@@ -250,7 +278,7 @@ export default function Explorer() {
                   </div>
                 </div>
 
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 max-h-72 overflow-y-auto">
                   {tsne.class_names.map((cls) => {
                     const cs = classStats.get(cls);
                     const active = visibleClasses.has(cls);
@@ -268,9 +296,9 @@ export default function Explorer() {
                         >
                           <div
                             className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-opacity"
-                            style={{ backgroundColor: CLASS_COLORS[cls] ?? FALLBACK_COLOR }}
+                            style={{ backgroundColor: colorFor(tsne.class_names, cls) }}
                           />
-                          <span className="text-xs text-slate-600 dark:text-slate-300 truncate flex-1">
+                          <span className="text-xs text-slate-600 dark:text-slate-300 truncate flex-1 capitalize">
                             {cls}
                           </span>
                           <span className="text-[10px] text-slate-400 dark:text-slate-600 font-mono">
@@ -320,7 +348,7 @@ export default function Explorer() {
                   About
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  t-SNE reduces the network's 64-dimensional hidden layer activations
+                  t-SNE reduces the network's hidden layer activations
                   into 2D. Points close together were encoded similarly by the neural network.
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 leading-relaxed">
@@ -348,7 +376,7 @@ export default function Explorer() {
               </div>
 
               <div className="p-5 flex items-start gap-8">
-                {/* Left: spectrogram placeholder + coordinates */}
+                {/* Left: coordinates */}
                 <div className="space-y-3">
                   <div className="w-32 h-32 rounded-lg bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center">
                     <span className="text-[10px] text-slate-400 dark:text-slate-600 font-mono">
@@ -358,7 +386,7 @@ export default function Explorer() {
                   <div className="text-center">
                     <span
                       className="inline-block w-3 h-3 rounded-full mr-1.5"
-                      style={{ backgroundColor: CLASS_COLORS[selectedPoint.class_name] ?? FALLBACK_COLOR }}
+                      style={{ backgroundColor: colorFor(tsne.class_names, selectedPoint.class_name) }}
                     />
                     <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
                       Sample #{selectedIdx}
@@ -374,7 +402,7 @@ export default function Explorer() {
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mb-1">
                         True Label
                       </p>
-                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      <p className="text-lg font-semibold text-slate-900 dark:text-white capitalize">
                         {selectedPoint.class_name}
                       </p>
                     </div>
@@ -385,7 +413,7 @@ export default function Explorer() {
                         Predicted
                       </p>
                       <div className="flex items-center gap-2">
-                        <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                        <p className="text-lg font-semibold text-slate-900 dark:text-white capitalize">
                           {selectedPoint.predicted_label}
                         </p>
                         {selectedPoint.correct ? (
@@ -429,8 +457,8 @@ export default function Explorer() {
                     <p className="text-xs text-slate-500 dark:text-slate-500 leading-relaxed">
                       The model confused <span className="font-medium text-slate-700 dark:text-slate-300">{selectedPoint.class_name}</span> for{' '}
                       <span className="font-medium text-slate-700 dark:text-slate-300">{selectedPoint.predicted_label}</span>.
-                      Check if these classes cluster near each other in the scatter plot — overlapping clusters indicate
-                      the network finds them acoustically similar.
+                      Check if these classes cluster near each other — overlapping clusters indicate
+                      the network finds them similar.
                     </p>
                   )}
                 </div>

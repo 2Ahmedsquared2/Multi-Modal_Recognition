@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { api } from '../api/client';
 import { useModel } from '../contexts/ModelContext';
 import type { WhatIfResponse } from '../types';
@@ -7,6 +7,7 @@ import type { BrushTool } from '../components/SpectrogramEditor';
 import AudioTrimmer from '../components/AudioTrimmer';
 import AudioInputZone from '../components/AudioInputZone';
 import MicrophoneRecorder from '../components/MicrophoneRecorder';
+import ImageInputZone from '../components/ImageInputZone';
 
 // ── Confidence bar list ──────────────────────────────────────────────────
 
@@ -37,8 +38,8 @@ function ConfidenceBars({
               <span
                 className={
                   isTop
-                    ? 'font-semibold text-slate-900 dark:text-white'
-                    : 'text-slate-500 dark:text-slate-400'
+                    ? 'font-semibold text-slate-900 dark:text-white capitalize'
+                    : 'text-slate-500 dark:text-slate-400 capitalize'
                 }
               >
                 {cls}
@@ -84,10 +85,18 @@ function ConfidenceBars({
 
 // ── Preset definitions ───────────────────────────────────────────────────
 
-const PRESETS = [
+const AUDIO_PRESETS = [
   { id: 'remove-low', label: 'Remove Low Freq', icon: '⬇' },
   { id: 'remove-high', label: 'Remove High Freq', icon: '⬆' },
   { id: 'keep-mid', label: 'Keep Mid-Range', icon: '⬌' },
+  { id: 'add-noise', label: 'Add Noise', icon: '〰' },
+  { id: 'reset', label: 'Reset', icon: '↺' },
+] as const;
+
+const IMAGE_PRESETS = [
+  { id: 'remove-top', label: 'Blank Top Half', icon: '⬆' },
+  { id: 'remove-bottom', label: 'Blank Bottom Half', icon: '⬇' },
+  { id: 'keep-center', label: 'Keep Center', icon: '◎' },
   { id: 'add-noise', label: 'Add Noise', icon: '〰' },
   { id: 'reset', label: 'Reset', icon: '↺' },
 ] as const;
@@ -99,13 +108,16 @@ type Phase = 'upload' | 'trim' | 'recording' | 'loaded';
 // ── Main page component ─────────────────────────────────────────────────
 
 export default function WhatIf() {
-  const { engine, engineLabel } = useModel();
+  const { engine, engineLabel, dataset, modality, activeDataset } = useModel();
+
+  const isAudio = modality === 'audio';
+  const datasetLabel = activeDataset?.name ?? dataset;
 
   // Phase & audio source
   const [phase, setPhase] = useState<Phase>('upload');
   const [audioFile, setAudioFile] = useState<File | null>(null);
 
-  // Spectrogram & predictions
+  // Spectrogram / preprocessed matrix & predictions
   const [originalSpec, setOriginalSpec] = useState<number[][] | null>(null);
   const [modifiedSpec, setModifiedSpec] = useState<number[][] | null>(null);
   const [originalPred, setOriginalPred] = useState<WhatIfResponse | null>(null);
@@ -121,15 +133,34 @@ export default function WhatIf() {
 
   const originalPredRef = useRef<WhatIfResponse | null>(null);
 
-  // ── Phase 1a: User picks a file → go to trimmer ──
+  // Reset when modality/dataset changes
+  useEffect(() => {
+    resetState();
+  }, [modality, dataset]);
 
-  const handleFileSelected = useCallback((file: File) => {
+  // ── Shared: Reset everything ──
+
+  const resetState = useCallback(() => {
+    setPhase('upload');
+    setAudioFile(null);
+    setOriginalSpec(null);
+    setModifiedSpec(null);
+    setOriginalPred(null);
+    setModifiedPred(null);
+    originalPredRef.current = null;
+    setError(null);
+    setInsight('');
+  }, []);
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Audio flow
+  // ──────────────────────────────────────────────────────────────────────
+
+  const handleAudioFileSelected = useCallback((file: File) => {
     setError(null);
     setAudioFile(file);
     setPhase('trim');
   }, []);
-
-  // ── Phase 1b: Mic recording finished → go to trimmer ──
 
   const handleMicRecording = useCallback((file: File) => {
     setError(null);
@@ -137,14 +168,12 @@ export default function WhatIf() {
     setPhase('trim');
   }, []);
 
-  // ── Phase 2: User clicks "Classify This Segment" from trimmer ──
-
   const handleClassifyBlob = useCallback(async (blob: Blob) => {
     setError(null);
     setLoading(true);
     try {
       const wavFile = new File([blob], 'segment.wav', { type: 'audio/wav' });
-      const result = await api.classify(wavFile, engine);
+      const result = await api.classify(wavFile, engine, dataset);
       const spec = result.spectrogram;
       const pred: WhatIfResponse = {
         prediction: result.prediction,
@@ -164,28 +193,47 @@ export default function WhatIf() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [engine, dataset]);
 
-  // ── Reset everything ──
+  // ──────────────────────────────────────────────────────────────────────
+  //  Image flow
+  // ──────────────────────────────────────────────────────────────────────
 
-  const resetState = useCallback(() => {
-    setPhase('upload');
-    setAudioFile(null);
-    setOriginalSpec(null);
-    setModifiedSpec(null);
-    setOriginalPred(null);
-    setModifiedPred(null);
-    originalPredRef.current = null;
+  const handleImageFileSelected = useCallback(async (file: File) => {
     setError(null);
-    setInsight('');
-  }, []);
+    setLoading(true);
+    try {
+      const result = await api.classify(file, engine, dataset);
+      const spec = result.spectrogram; // preprocessed image matrix
+      const pred: WhatIfResponse = {
+        prediction: result.prediction,
+        confidence: result.confidence,
+        all_confidences: result.all_confidences,
+      };
 
-  // ── Re-predict the modified spectrogram via /api/what-if ──
+      setOriginalSpec(spec);
+      setModifiedSpec(spec.map((row) => [...row]));
+      setOriginalPred(pred);
+      setModifiedPred(pred);
+      originalPredRef.current = pred;
+      setInsight('');
+      setPhase('loaded');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process image');
+      setPhase('upload');
+    } finally {
+      setLoading(false);
+    }
+  }, [engine, dataset]);
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Shared: Re-predict modified input
+  // ──────────────────────────────────────────────────────────────────────
 
   const predict = useCallback(async (spec: number[][]) => {
     setPredicting(true);
     try {
-      const result = await api.whatIf(spec, engine);
+      const result = await api.whatIf(spec, engine, dataset);
       setModifiedPred(result);
 
       // Generate insight by comparing to original
@@ -196,8 +244,8 @@ export default function WhatIf() {
             `The prediction shifted from ${orig.prediction} ` +
               `(${(orig.confidence * 100).toFixed(1)}%) to ` +
               `${result.prediction} (${(result.confidence * 100).toFixed(1)}%). ` +
-              `This suggests the model relies on the modified frequency regions ` +
-              `to distinguish these instruments.`,
+              `This suggests the model relies on the modified regions ` +
+              `to distinguish these classes.`,
           );
         } else if (result.confidence < orig.confidence - 0.1) {
           setInsight(
@@ -224,9 +272,9 @@ export default function WhatIf() {
     } finally {
       setPredicting(false);
     }
-  }, []);
+  }, [engine, dataset]);
 
-  // ── Canvas edit handler (called on mouseUp from SpectrogramEditor) ──
+  // ── Canvas edit handler ──
 
   const handleSpecChange = useCallback(
     (newSpec: number[][]) => {
@@ -246,6 +294,7 @@ export default function WhatIf() {
       const nCols = spec[0]?.length ?? 0;
 
       switch (presetId) {
+        // Audio presets
         case 'remove-low': {
           const cutoff = Math.floor(nRows / 3);
           for (let r = 0; r < cutoff; r++)
@@ -268,6 +317,29 @@ export default function WhatIf() {
           }
           break;
         }
+        // Image presets
+        case 'remove-top': {
+          const cutoff = Math.floor(nRows / 2);
+          for (let r = 0; r < cutoff; r++)
+            for (let c = 0; c < nCols; c++) spec[r][c] = 0;
+          break;
+        }
+        case 'remove-bottom': {
+          const cutoff = Math.floor(nRows / 2);
+          for (let r = cutoff; r < nRows; r++)
+            for (let c = 0; c < nCols; c++) spec[r][c] = 0;
+          break;
+        }
+        case 'keep-center': {
+          const marginR = Math.floor(nRows / 4);
+          const marginC = Math.floor(nCols / 4);
+          for (let r = 0; r < nRows; r++)
+            for (let c = 0; c < nCols; c++)
+              if (r < marginR || r >= nRows - marginR || c < marginC || c >= nCols - marginC)
+                spec[r][c] = 0;
+          break;
+        }
+        // Shared presets
         case 'add-noise': {
           for (let r = 0; r < nRows; r++)
             for (let c = 0; c < nCols; c++)
@@ -288,11 +360,14 @@ export default function WhatIf() {
     [originalSpec, predict],
   );
 
+  const presets = isAudio ? AUDIO_PRESETS : IMAGE_PRESETS;
+  const inputLabel = isAudio ? 'spectrogram' : 'preprocessed image';
+
   return (
-    <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10 space-y-8">
       {/* ── Header ── */}
-      <header className="space-y-2">
-        <div className="flex items-center gap-2">
+      <header className="stagger-1 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             What-If Tool
           </h1>
@@ -305,99 +380,133 @@ export default function WhatIf() {
           >
             {engineLabel}
           </span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            {datasetLabel}
+          </span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Paint on a spectrogram and watch the {engineLabel} model's prediction change in real
-          time. Discover which frequency regions matter most for each sound
-          class.
+          {isAudio
+            ? `Paint on a spectrogram and watch the ${engineLabel} model's prediction change in real time. Discover which frequency regions matter most for each class.`
+            : `Paint on the preprocessed image and watch the ${engineLabel} model's prediction change in real time. Discover which regions matter most for classification.`}
         </p>
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          Phase 1: Upload / source selection
+          AUDIO FLOW
           ═══════════════════════════════════════════════════════════════════ */}
-      {phase === 'upload' && (
-        <AudioInputZone
-          onFileSelected={handleFileSelected}
-          onRecordClick={() => setPhase('recording')}
-          statusHint="Upload or record audio, then select a 2-second segment to paint on and explore."
-        />
+      {isAudio && (
+        <>
+          {phase === 'upload' && (
+            <AudioInputZone
+              onFileSelected={handleAudioFileSelected}
+              onRecordClick={() => setPhase('recording')}
+              statusHint="Upload or record audio, then select a 2-second segment to paint on and explore."
+            />
+          )}
+
+          {phase === 'recording' && (
+            <MicrophoneRecorder
+              onRecordingComplete={handleMicRecording}
+              onCancel={resetState}
+            />
+          )}
+
+          {phase === 'trim' && audioFile && (
+            <div className="space-y-4">
+              <AudioTrimmer
+                file={audioFile}
+                clipDuration={2}
+                onClassify={handleClassifyBlob}
+                onCancel={resetState}
+              />
+
+              {loading && (
+                <div className="card p-6 flex items-center gap-3 animate-fade-in">
+                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Analyzing audio…
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                      Generating spectrogram → Running inference
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="card p-4 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 animate-fade-in">
+                  <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          Phase 1b: Microphone Recording
+          IMAGE FLOW
           ═══════════════════════════════════════════════════════════════════ */}
-      {phase === 'recording' && (
-        <MicrophoneRecorder
-          onRecordingComplete={handleMicRecording}
-          onCancel={resetState}
-        />
-      )}
+      {!isAudio && (
+        <>
+          {phase === 'upload' && !loading && (
+            <ImageInputZone
+              onFileSelected={handleImageFileSelected}
+              statusHint={`Upload an image for ${datasetLabel} — then paint on the preprocessed input to explore.`}
+            />
+          )}
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          Phase 2: Trim / select 2-second segment
-          ═══════════════════════════════════════════════════════════════════ */}
-      {phase === 'trim' && audioFile && (
-        <div className="space-y-4">
-          <AudioTrimmer
-            file={audioFile}
-            clipDuration={2}
-            onClassify={handleClassifyBlob}
-            onCancel={resetState}
-          />
-
-          {/* Loading indicator */}
-          {loading && (
-            <div className="card p-6 flex items-center gap-3 animate-fade-in">
-              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <div>
+          {loading && phase === 'upload' && (
+            <div className="card p-8 flex flex-col items-center gap-4 animate-fade-in">
+              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="text-center">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Analyzing audio…
+                  Processing image…
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Generating spectrogram → Running inference
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                  Resizing → Normalizing → Running inference
                 </p>
               </div>
             </div>
           )}
 
-          {error && (
+          {error && phase === 'upload' && (
             <div className="card p-4 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 animate-fade-in">
-              <p className="text-sm text-rose-600 dark:text-rose-400">
-                {error}
-              </p>
+              <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          Phase 3: Loaded — spectrogram editor
+          LOADED — Shared editor (works on spectrogram or image matrix)
           ═══════════════════════════════════════════════════════════════════ */}
       {phase === 'loaded' && originalSpec && modifiedSpec && (
         <div className="space-y-6">
           {/* ── Top bar: source controls + predicting indicator ── */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setPhase('trim');
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium
-                  bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400
-                  hover:bg-indigo-100 dark:hover:bg-indigo-500/20
-                  transition-colors duration-150"
-              >
-                Try Different Segment
-              </button>
+              {isAudio && (
+                <button
+                  onClick={() => {
+                    setPhase('trim');
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium
+                    bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400
+                    hover:bg-indigo-100 dark:hover:bg-indigo-500/20
+                    transition-all duration-150 active:scale-[0.98]"
+                >
+                  Try Different Segment
+                </button>
+              )}
               <button
                 onClick={resetState}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium
                   bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400
                   hover:bg-slate-200 dark:hover:bg-slate-700
-                  transition-colors duration-150"
+                  transition-all duration-150 active:scale-[0.98]"
               >
-                New Audio
+                {isAudio ? 'New Audio' : 'New Image'}
               </button>
             </div>
             {predicting && (
@@ -408,7 +517,7 @@ export default function WhatIf() {
             )}
           </div>
 
-          {/* ── Before / After spectrograms ── */}
+          {/* ── Before / After ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Original (read-only) */}
             <div className="space-y-4">
@@ -416,7 +525,7 @@ export default function WhatIf() {
                 <SpectrogramEditor
                   spectrogram={originalSpec}
                   readOnly
-                  label="Original"
+                  label={`Original ${inputLabel}`}
                 />
               </div>
               <div className="card p-4 space-y-3">
@@ -540,7 +649,7 @@ export default function WhatIf() {
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500 mr-1">
                   Presets
                 </span>
-                {PRESETS.map((p) => (
+                {presets.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => applyPreset(p.id)}

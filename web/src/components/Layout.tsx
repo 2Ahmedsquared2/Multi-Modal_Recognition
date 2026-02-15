@@ -7,7 +7,10 @@ import { useModel } from '../contexts/ModelContext';
 export default function Layout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { engine, engineLabel } = useModel();
+  const { engine, engineLabel, modality, dataset } = useModel();
+
+  /* Key includes modality + dataset so switching triggers a fade transition */
+  const contentKey = `${location.pathname}-${engine}-${modality}-${dataset}`;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -27,7 +30,7 @@ export default function Layout() {
         <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-800 lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150 active:scale-95"
             aria-label="Open navigation"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
@@ -35,7 +38,7 @@ export default function Layout() {
             </svg>
           </button>
           <span className="text-sm font-semibold text-slate-900 dark:text-white tracking-tight">
-            APRE
+            MPRE
           </span>
           <span className={`ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full
             ${engine === 'pytorch'
@@ -48,8 +51,8 @@ export default function Layout() {
         </div>
 
         <div className="flex-1">
-          <ErrorBoundary key={`${location.pathname}-${engine}`}>
-            <div className="animate-fade-in" key={`${location.pathname}-${engine}`}>
+          <ErrorBoundary key={contentKey}>
+            <div className="animate-fade-in" key={contentKey}>
               <Outlet />
             </div>
           </ErrorBoundary>
@@ -65,7 +68,7 @@ export default function Layout() {
               }
             </p>
             <p className="text-slate-400 dark:text-slate-600">
-              Acoustic Pattern Recognition Engine
+              Multi-Modal Pattern Recognition Engine
             </p>
           </div>
         </footer>

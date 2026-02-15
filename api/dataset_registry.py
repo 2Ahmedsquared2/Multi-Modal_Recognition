@@ -60,11 +60,11 @@ class DatasetConfig:
 MUSIC_GENRE = DatasetConfig(
     key="audio/music",
     modality="audio",
-    name="Music Genre",
-    description="10-class music genre classification (GTZAN-style)",
+    name="Instrument Families",
+    description="10-class instrument family classification (NSynth-style)",
     class_names=[
-        "blues", "classical", "country", "disco", "hiphop",
-        "jazz", "metal", "pop", "reggae", "rock",
+        "bass", "brass", "flute", "guitar", "keyboard",
+        "mallet", "organ", "reed", "string", "vocal",
     ],
     # Backward-compatible paths from Phase 2
     model_path="models/model.npz",

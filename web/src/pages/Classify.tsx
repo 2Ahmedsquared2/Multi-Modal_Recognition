@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { api } from '../api/client';
 import { useModel } from '../contexts/ModelContext';
 import type { ClassifyResult } from '../types';
+
+/* ── Audio-specific imports ── */
 import AudioTrimmer from '../components/AudioTrimmer';
 import MicrophoneRecorder from '../components/MicrophoneRecorder';
 import AudioInputZone from '../components/AudioInputZone';
@@ -9,20 +11,30 @@ import PipelineAnimation from '../components/PipelineAnimation';
 import WaveformDisplay from '../components/WaveformDisplay';
 import SpectrogramDisplay from '../components/SpectrogramDisplay';
 
+/* ── Image-specific imports ── */
+import ImageInputZone from '../components/ImageInputZone';
+import ImageDisplay from '../components/ImageDisplay';
+
 type Phase = 'upload' | 'trim' | 'recording' | 'pipeline' | 'results';
 type InputSource = 'upload' | 'mic';
 
 export default function Classify() {
-  const { engine, engineLabel } = useModel();
+  const { engine, engineLabel, modality, dataset, activeDataset } = useModel();
   const [phase, setPhase] = useState<Phase>('upload');
   const [result, setResult] = useState<ClassifyResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [source, setSource] = useState<InputSource>('upload');
   const hasAnimatedRef = useRef(false);
   const [showAllProbs, setShowAllProbs] = useState(false);
+
+  // Reset state when modality or dataset changes
+  useEffect(() => {
+    resetState();
+  }, [modality, dataset]);
 
   // Animation: bars start at 0 and grow to real values after mount
   const [animateBars, setAnimateBars] = useState(false);
@@ -34,8 +46,12 @@ export default function Classify() {
     setAnimateBars(false);
   }, [result]);
 
-  // ── Phase 1a: User picks a file ──
-  const handleFileSelected = useCallback((file: File) => {
+  // ──────────────────────────────────────────────────────────────────────
+  //  Audio flow handlers
+  // ──────────────────────────────────────────────────────────────────────
+
+  /** Phase 1a: User picks an audio file */
+  const handleAudioFileSelected = useCallback((file: File) => {
     setError(null);
     setResult(null);
     setFileName(file.name);
@@ -44,14 +60,14 @@ export default function Classify() {
     setPhase('trim');
   }, []);
 
-  // ── Phase 2: User clicks "Classify" from trimmer (sends a WAV blob) ──
+  /** Phase 2: User clicks "Classify" from trimmer (sends a WAV blob) */
   const handleClassifyBlob = useCallback(async (blob: Blob) => {
     setError(null);
     setResult(null);
     setLoading(true);
     try {
       const wavFile = new File([blob], 'segment.wav', { type: 'audio/wav' });
-      const res = await api.classify(wavFile, engine);
+      const res = await api.classify(wavFile, engine, dataset);
       setResult(res);
       if (!hasAnimatedRef.current) {
         setPhase('pipeline');
@@ -63,9 +79,9 @@ export default function Classify() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [engine, dataset]);
 
-  // ── Phase 1b: Mic recording finished → go to trimmer (same as file upload) ──
+  /** Phase 1b: Mic recording finished → trimmer */
   const handleMicRecording = useCallback((file: File) => {
     setError(null);
     setResult(null);
@@ -75,13 +91,41 @@ export default function Classify() {
     setPhase('trim');
   }, []);
 
-  // ── Pipeline animation finished ──
+  /** Pipeline animation finished */
   const handlePipelineComplete = useCallback(() => {
     hasAnimatedRef.current = true;
     setPhase('results');
   }, []);
 
-  // ── Reset everything ──
+  // ──────────────────────────────────────────────────────────────────────
+  //  Image flow handlers
+  // ──────────────────────────────────────────────────────────────────────
+
+  /** User picks an image file → classify immediately */
+  const handleImageFileSelected = useCallback(async (file: File) => {
+    setError(null);
+    setResult(null);
+    setFileName(file.name);
+    setSource('upload');
+    setImagePreviewUrl(URL.createObjectURL(file));
+    setLoading(true);
+
+    try {
+      const res = await api.classify(file, engine, dataset);
+      setResult(res);
+      setPhase('results');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Classification failed');
+      setPhase('upload');
+    } finally {
+      setLoading(false);
+    }
+  }, [engine, dataset]);
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Shared
+  // ──────────────────────────────────────────────────────────────────────
+
   const resetState = useCallback(() => {
     setPhase('upload');
     setResult(null);
@@ -90,32 +134,35 @@ export default function Classify() {
     setAudioFile(null);
     setSource('upload');
     setAnimateBars(false);
-  }, []);
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl(null);
+  }, [imagePreviewUrl]);
 
   // Sorted confidences for the bar chart
   const sortedConfidences = result
     ? Object.entries(result.all_confidences).sort(([, a], [, b]) => b - a)
     : [];
 
-  // Top 5 predictions
   const topConfidences = sortedConfidences.slice(0, 5);
   const displayedConfidences = showAllProbs ? sortedConfidences : topConfidences;
 
-  // Color-code confidence levels
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.7) return 'text-emerald-600 dark:text-emerald-400';
     if (confidence >= 0.4) return 'text-amber-600 dark:text-amber-400';
     return 'text-slate-600 dark:text-slate-400';
   };
 
+  const isAudio = modality === 'audio';
+  const datasetLabel = activeDataset?.name ?? dataset;
+
   return (
-    <div className="max-w-7xl mx-auto px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10 space-y-8">
 
       {/* Header */}
-      <header className="space-y-2">
+      <header className="stagger-1 space-y-2">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Classify Audio
+            {isAudio ? 'Classify Audio' : 'Classify Image'}
           </h1>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full
             ${engine === 'custom'
@@ -125,102 +172,150 @@ export default function Classify() {
           >
             {engineLabel}
           </span>
+          <span className="text-xs font-medium px-3 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            {datasetLabel}
+          </span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Upload an audio file or record from your microphone. The {engineLabel} neural network will analyze
-          the spectrogram and predict what sound it is.
+          {isAudio
+            ? `Upload an audio file or record from your microphone. The ${engineLabel} neural network will analyze the spectrogram and predict what sound it is.`
+            : `Upload an image and the ${engineLabel} neural network will preprocess, analyze, and classify it.`}
         </p>
       </header>
 
       {/* ═══════════════════════════════════════════════════════════════
-          Phase 1: Upload
+          AUDIO FLOW
           ═══════════════════════════════════════════════════════════════ */}
-      {phase === 'upload' && (
-        <AudioInputZone
-          onFileSelected={handleFileSelected}
-          onRecordClick={() => setPhase('recording')}
-          statusHint="Upload a file or record from your mic — the neural network will analyze the spectrogram and classify the sound."
-        />
-      )}
+      {isAudio && (
+        <>
+          {/* Phase 1: Upload */}
+          {phase === 'upload' && (
+            <AudioInputZone
+              onFileSelected={handleAudioFileSelected}
+              onRecordClick={() => setPhase('recording')}
+              statusHint="Upload a file or record from your mic — the neural network will analyze the spectrogram and classify the sound."
+            />
+          )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          Phase 2: Trim / Preview
-          ═══════════════════════════════════════════════════════════════ */}
-      {phase === 'trim' && audioFile && (
-        <div className="space-y-4">
-          <AudioTrimmer
-            file={audioFile}
-            clipDuration={2}
-            onClassify={handleClassifyBlob}
-            onCancel={resetState}
-          />
+          {/* Phase 2: Trim / Preview */}
+          {phase === 'trim' && audioFile && (
+            <div className="space-y-4">
+              <AudioTrimmer
+                file={audioFile}
+                clipDuration={2}
+                onClassify={handleClassifyBlob}
+                onCancel={resetState}
+              />
 
-          {/* Loading state */}
-          {loading && (
-            <div className="card p-6 flex items-center gap-3 animate-fade-in">
-              <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <div>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Analyzing audio...
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Generating spectrogram → Running inference
-                </p>
-              </div>
+              {loading && (
+                <div className="card p-6 flex items-center gap-3 animate-fade-in">
+                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Analyzing audio…
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                      Generating spectrogram → Running inference
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="card p-4 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 animate-fade-in">
+                  <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
+                </div>
+              )}
             </div>
           )}
 
-          {error && (
+          {/* Phase 2b: Microphone Recording */}
+          {phase === 'recording' && (
+            <MicrophoneRecorder onRecordingComplete={handleMicRecording} onCancel={resetState} />
+          )}
+
+          {/* Phase 2c: Pipeline Animation (first classify only) */}
+          {phase === 'pipeline' && result && (
+            <PipelineAnimation
+              waveform={result.waveform ?? []}
+              spectrogram={result.spectrogram}
+              prediction={result.prediction}
+              confidence={result.confidence}
+              onComplete={handlePipelineComplete}
+            />
+          )}
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          IMAGE FLOW
+          ═══════════════════════════════════════════════════════════════ */}
+      {!isAudio && (
+        <>
+          {/* Upload */}
+          {phase === 'upload' && !loading && (
+            <ImageInputZone
+              onFileSelected={handleImageFileSelected}
+              statusHint={`Upload an image for ${datasetLabel} classification.`}
+            />
+          )}
+
+          {/* Loading overlay */}
+          {loading && (
+            <div className="card p-8 flex flex-col items-center gap-4 animate-fade-in">
+              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Analyzing image…
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                  Resizing → Normalizing → Running inference
+                </p>
+              </div>
+              {imagePreviewUrl && (
+                <img
+                  src={imagePreviewUrl}
+                  alt="Processing"
+                  className="w-24 h-24 object-cover rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 opacity-60"
+                />
+              )}
+            </div>
+          )}
+
+          {/* Error */}
+          {error && phase === 'upload' && (
             <div className="card p-4 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/5 animate-fade-in">
               <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          Phase 2b: Microphone Recording
-          ═══════════════════════════════════════════════════════════════ */}
-      {phase === 'recording' && (
-        <MicrophoneRecorder onRecordingComplete={handleMicRecording} onCancel={resetState} />
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          Phase 2c: Pipeline Animation (first classify only)
-          ═══════════════════════════════════════════════════════════════ */}
-      {phase === 'pipeline' && result && (
-        <PipelineAnimation
-          waveform={result.waveform}
-          spectrogram={result.spectrogram}
-          prediction={result.prediction}
-          confidence={result.confidence}
-          onComplete={handlePipelineComplete}
-        />
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          Phase 3: Results
+          RESULTS (shared layout, modality-aware visualization)
           ═══════════════════════════════════════════════════════════════ */}
       {phase === 'results' && result && (
-        <div className="space-y-6 animate-fade-in-up">
+        <div className="space-y-6 stagger-2">
 
-          {/* Action buttons at top right */}
+          {/* Action buttons */}
           <div className="flex justify-end gap-3">
-            <button
-              onClick={() => {
-                setResult(null);
-                setPhase('trim');
-              }}
-              className="px-4 py-2 rounded-lg text-sm font-medium
-                border border-slate-300 dark:border-slate-700
-                text-slate-600 dark:text-slate-300
-                hover:bg-slate-50 dark:hover:bg-slate-800
-                transition-colors duration-150"
-            >
-              Try Different Segment
-            </button>
+            {isAudio && (
+              <button
+                onClick={() => {
+                  setResult(null);
+                  setPhase('trim');
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium
+                  border border-slate-300 dark:border-slate-700
+                  text-slate-600 dark:text-slate-300
+                  hover:bg-slate-50 dark:hover:bg-slate-800
+                  transition-colors duration-150"
+              >
+                Try Different Segment
+              </button>
+            )}
 
-            {source === 'mic' && (
+            {isAudio && source === 'mic' && (
               <button
                 onClick={() => {
                   setResult(null);
@@ -247,19 +342,21 @@ export default function Classify() {
               className="px-4 py-2 rounded-lg text-sm font-medium
                 bg-indigo-600 text-white
                 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
-                transition-colors duration-150"
+                transition-all duration-150 active:scale-[0.98]"
             >
-              {source === 'upload' ? 'Upload New File' : 'Back to Upload'}
+              {isAudio
+                ? (source === 'upload' ? 'Upload New File' : 'Back to Upload')
+                : 'Upload New Image'}
             </button>
           </div>
 
           {/* Main content grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* Left side: Prediction + Visualizations */}
             <div className="lg:col-span-2 space-y-6">
-              
-              {/* Prediction card - more prominent */}
+
+              {/* Prediction card */}
               <div className="card p-6 space-y-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
                   Prediction
@@ -279,21 +376,30 @@ export default function Classify() {
                 )}
               </div>
 
-              {/* Waveform + Spectrogram - equal heights */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="card p-5 flex flex-col">
-                  <WaveformDisplay
-                    waveform={result.waveform}
-                    duration={result.waveform_summary.duration}
-                  />
+              {/* Modality-specific visualization */}
+              {isAudio && result.waveform_summary ? (
+                /* Audio: Waveform + Spectrogram side-by-side */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="card p-5 flex flex-col">
+                    <WaveformDisplay
+                      waveform={result.waveform ?? []}
+                      duration={result.waveform_summary.duration}
+                    />
+                  </div>
+                  <div className="card p-5 flex flex-col">
+                    <SpectrogramDisplay
+                      spectrogram={result.spectrogram}
+                      duration={result.waveform_summary.duration}
+                    />
+                  </div>
                 </div>
-                <div className="card p-5 flex flex-col">
-                  <SpectrogramDisplay
-                    spectrogram={result.spectrogram}
-                    duration={result.waveform_summary.duration}
-                  />
-                </div>
-              </div>
+              ) : (
+                /* Image: Original + Preprocessed side-by-side */
+                <ImageDisplay
+                  originalSrc={imagePreviewUrl}
+                  preprocessed={result.spectrogram}
+                />
+              )}
             </div>
 
             {/* Right side: Top probabilities */}
@@ -340,7 +446,7 @@ export default function Classify() {
                         </div>
                         <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-700 ease-out ${
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${
                               isTop
                                 ? 'bg-indigo-500 dark:bg-indigo-400'
                                 : isSignificant
