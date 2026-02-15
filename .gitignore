@@ -14,6 +14,11 @@ __pycache__/
 data/raw/*
 data/spectrograms/*
 data/processed/*
+data/.cache/
+data/audio/
+data/image/
+data/prepared/
+data/preprocessed/
 !data/raw/.gitkeep
 !data/spectrograms/.gitkeep
 !data/processed/.gitkeep
