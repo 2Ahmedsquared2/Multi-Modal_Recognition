@@ -50,3 +50,11 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Test files
+test/audio/
+test/images/
+test/documents/
+test/video/
+test/MEDICAL_README.md
+test/README.md
