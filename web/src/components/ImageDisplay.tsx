@@ -103,7 +103,7 @@ export default function ImageDisplay({ originalSrc, preprocessed }: ImageDisplay
       {/* Original image */}
       <div className="card p-5 flex flex-col">
         <div className="space-y-3 h-full flex flex-col">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             Original Image
           </p>
           <div className="flex-1 flex items-center justify-center">
@@ -114,12 +114,12 @@ export default function ImageDisplay({ originalSrc, preprocessed }: ImageDisplay
                 className="max-h-64 max-w-full rounded-lg object-contain ring-1 ring-slate-200/50 dark:ring-slate-700/50"
               />
             ) : (
-              <div className="w-full h-40 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                <span className="text-xs text-slate-400 dark:text-slate-600">No image</span>
+              <div className="w-full h-40 bg-warm-200 dark:bg-warm-700 rounded-lg flex items-center justify-center">
+                <span className="text-xs text-warm-400 dark:text-warm-600">No image</span>
               </div>
             )}
           </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center italic">
+          <p className="text-[10px] text-warm-400 dark:text-warm-600 text-center italic">
             The image you uploaded
           </p>
         </div>
@@ -129,10 +129,10 @@ export default function ImageDisplay({ originalSrc, preprocessed }: ImageDisplay
       <div className="card p-5 flex flex-col">
         <div className="space-y-3 h-full flex flex-col">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
               Preprocessed ({nRows}×{nCols})
             </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-600">
+            <p className="text-[10px] text-warm-400 dark:text-warm-600">
               Viridis colormap
             </p>
           </div>
@@ -142,7 +142,7 @@ export default function ImageDisplay({ originalSrc, preprocessed }: ImageDisplay
               className="rounded-lg border border-slate-200/50 dark:border-slate-700/50"
             />
           </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center italic">
+          <p className="text-[10px] text-warm-400 dark:text-warm-600 text-center italic">
             What the model sees — your image resized and normalized
           </p>
         </div>

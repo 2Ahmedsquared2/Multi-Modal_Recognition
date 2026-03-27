@@ -97,18 +97,18 @@ export default function ClassMetricsChart({ metrics, macroF1 }: Props) {
       {/* ── Header + Sort Toggle ── */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             Per-Class Metrics
           </h3>
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+          <div className="flex items-center gap-1.5 bg-warm-200 dark:bg-warm-700 rounded-lg p-0.5">
             {sortOptions.map((opt) => (
               <button
                 key={opt.key}
                 onClick={() => setSortBy(opt.key)}
                 className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
                   ${sortBy === opt.key
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                    ? 'bg-white dark:bg-slate-700 text-warm-900 dark:text-warm-100 shadow-sm'
+                    : 'text-warm-500 dark:text-warm-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
               >
                 {opt.label}
@@ -116,7 +116,7 @@ export default function ClassMetricsChart({ metrics, macroF1 }: Props) {
             ))}
           </div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-warm-500 dark:text-warm-400">
           Precision (correct positive predictions), Recall (found all positives), and F1 (balanced score) for each class.
         </p>
       </div>

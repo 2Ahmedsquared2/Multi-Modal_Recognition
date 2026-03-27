@@ -8,17 +8,16 @@
     <meta property="og:title" content="MPRE — Multi-Modal Pattern Recognition Engine" />
     <meta property="og:description" content="Classify instruments, medical sounds, wildlife, urban audio, medical images and more — powered by a neural network built from scratch." />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#6366f1" />
+    <meta name="theme-color" content="#8B7355" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;400;500;600;700;1,9..144,300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <title>MPRE — Multi-Modal Pattern Recognition Engine</title>
     <script>
-      // Prevent flash of wrong theme
-      if (localStorage.theme === 'light') {
-        document.documentElement.classList.remove('dark');
-      } else {
+      if (localStorage.theme === 'dark') {
         document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
     </script>
   </head>

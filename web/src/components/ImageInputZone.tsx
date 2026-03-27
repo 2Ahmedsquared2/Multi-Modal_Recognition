@@ -52,13 +52,13 @@ export default function ImageInputZone({
               flex flex-col items-center text-center
               transition-all duration-300
               ${dragOver
-                ? 'bg-indigo-50/80 dark:bg-indigo-500/5'
-                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                ? 'bg-accent-subtle/80 dark:bg-accent/5'
+                : 'hover:bg-warm-50 dark:hover:bg-warm-800/40'
               }`}
           >
             {/* Glow ring on drag */}
             {dragOver && (
-              <div className="absolute inset-0 rounded-t-xl ring-2 ring-indigo-400/50 ring-inset pointer-events-none" />
+              <div className="absolute inset-0 rounded-t-xl ring-2 ring-accent-light/50 ring-inset pointer-events-none" />
             )}
 
             <input
@@ -76,15 +76,15 @@ export default function ImageInputZone({
             <div
               className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300
                 ${dragOver
-                  ? 'bg-indigo-100 dark:bg-indigo-500/15 scale-110'
-                  : 'bg-slate-100 dark:bg-slate-800 group-hover:scale-105'
+                  ? 'bg-accent-subtle dark:bg-accent/15 scale-110'
+                  : 'bg-warm-200 dark:bg-warm-700 group-hover:scale-105'
                 }`}
             >
               <svg
                 className={`w-7 h-7 transition-colors duration-300 ${
                   dragOver
-                    ? 'text-indigo-500'
-                    : 'text-slate-400 dark:text-slate-500'
+                    ? 'text-accent'
+                    : 'text-warm-500 dark:text-warm-500'
                 }`}
                 viewBox="0 0 24 24"
                 fill="none"
@@ -100,10 +100,10 @@ export default function ImageInputZone({
             </div>
 
             {/* Primary text */}
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <p className="text-sm font-semibold text-warm-700 dark:text-warm-300">
               Drop image file here
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-warm-500 dark:text-warm-500 mt-1">
               or click to browse
             </p>
 
@@ -113,8 +113,8 @@ export default function ImageInputZone({
                 <span
                   key={fmt}
                   className="px-1.5 py-0.5 text-[10px] font-medium rounded
-                    bg-slate-100 text-slate-400
-                    dark:bg-slate-800 dark:text-slate-500"
+                    bg-warm-200 text-warm-500
+                    dark:bg-warm-700 dark:text-warm-500"
                 >
                   {fmt}
                 </span>
@@ -124,7 +124,7 @@ export default function ImageInputZone({
 
           {/* Hint text */}
           <div className="px-8 py-5">
-            <p className="text-center text-[11px] text-slate-400 dark:text-slate-600">
+            <p className="text-center text-[11px] text-warm-400 dark:text-warm-600">
               The image will be resized to 64×64 for classification
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function ImageInputZone({
           {preview ? (
             <>
               {/* Show thumbnail preview */}
-              <div className="w-28 h-28 rounded-xl overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
+              <div className="w-28 h-28 rounded-xl overflow-hidden ring-1 ring-warm-300 dark:ring-warm-700">
                 <img
                   src={preview}
                   alt="Upload preview"
@@ -148,7 +148,7 @@ export default function ImageInputZone({
                 <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   Image loaded
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-500 leading-relaxed max-w-[200px]">
+                <p className="text-sm text-warm-500 dark:text-warm-500 leading-relaxed max-w-[200px]">
                   Classifying now…
                 </p>
               </div>
@@ -156,9 +156,9 @@ export default function ImageInputZone({
           ) : (
             <>
               {/* Placeholder icon */}
-              <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-warm-50 dark:bg-warm-800/60 flex items-center justify-center">
                 <svg
-                  className="w-8 h-8 text-slate-300 dark:text-slate-700"
+                  className="w-8 h-8 text-warm-400 dark:text-warm-700"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -172,10 +172,10 @@ export default function ImageInputZone({
                 </svg>
               </div>
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-600">
+                <p className="text-xs font-semibold uppercase tracking-wider text-warm-400 dark:text-warm-600">
                   Waiting for image
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-500 leading-relaxed max-w-[200px]">
+                <p className="text-sm text-warm-500 dark:text-warm-500 leading-relaxed max-w-[200px]">
                   {statusHint}
                 </p>
               </div>

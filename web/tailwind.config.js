@@ -7,8 +7,31 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        warm: {
+          50:  '#FAFAF7',
+          100: '#F5F2ED',
+          150: '#F0EDE6',
+          200: '#EBE7E0',
+          300: '#E8E4DD',
+          400: '#D4CFC6',
+          500: '#A39E95',
+          600: '#78736A',
+          700: '#5C5750',
+          800: '#3D3935',
+          900: '#2C2925',
+        },
+        accent: {
+          DEFAULT: '#8B7355',
+          light: '#C4A882',
+          dark: '#6B5A42',
+          subtle: 'rgba(139, 115, 85, 0.08)',
+        },
+        success: '#6B9B6B',
+      },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Fraunces', 'Georgia', 'serif'],
+        sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       animation: {

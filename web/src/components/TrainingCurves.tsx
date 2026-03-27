@@ -82,10 +82,10 @@ export default function TrainingCurves({ history }: Props) {
       {/* ── Loss Chart ── */}
       <div className="card p-5 space-y-3">
         <div>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             Loss Over Epochs
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-warm-500 dark:text-warm-400 mt-1">
             Tracks how well the model learns over time. Lower loss means better fit to the data.
           </p>
         </div>
@@ -150,10 +150,10 @@ export default function TrainingCurves({ history }: Props) {
       {/* ── Accuracy Chart ── */}
       <div className="card p-5 space-y-3">
         <div>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             Accuracy Over Epochs
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-warm-500 dark:text-warm-400 mt-1">
             Shows prediction accuracy on training and validation sets. Higher is better.
           </p>
         </div>

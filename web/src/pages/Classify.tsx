@@ -147,9 +147,9 @@ export default function Classify() {
   const displayedConfidences = showAllProbs ? sortedConfidences : topConfidences;
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.7) return 'text-emerald-600 dark:text-emerald-400';
-    if (confidence >= 0.4) return 'text-amber-600 dark:text-amber-400';
-    return 'text-slate-600 dark:text-slate-400';
+    if (confidence >= 0.7) return 'text-success dark:text-success';
+    if (confidence >= 0.4) return 'text-accent dark:text-accent-light';
+    return 'text-warm-600 dark:text-warm-400';
   };
 
   const isAudio = modality === 'audio';
@@ -161,22 +161,22 @@ export default function Classify() {
       {/* Header */}
       <header className="stagger-1 space-y-2">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
             {isAudio ? 'Classify Audio' : 'Classify Image'}
           </h1>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full
             ${engine === 'custom'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
-              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300'
+              ? 'bg-accent-subtle text-accent dark:bg-accent/10 dark:text-accent-light'
+              : 'bg-warm-200 text-warm-600 dark:bg-warm-700 dark:text-warm-400'
             }`}
           >
             {engineLabel}
           </span>
-          <span className="text-xs font-medium px-3 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+          <span className="text-xs font-medium px-3 py-1 rounded-full bg-warm-200 text-warm-600 dark:bg-warm-700 dark:text-warm-400">
             {datasetLabel}
           </span>
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-warm-600 dark:text-warm-400">
           {isAudio
             ? `Upload an audio file or record from your microphone. The ${engineLabel} neural network will analyze the spectrogram and predict what sound it is.`
             : `Upload an image and the ${engineLabel} neural network will preprocess, analyze, and classify it.`}
@@ -209,12 +209,12 @@ export default function Classify() {
 
               {loading && (
                 <div className="card p-6 flex items-center gap-3 animate-fade-in">
-                  <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                   <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <p className="text-sm font-medium text-warm-700 dark:text-warm-300">
                       Analyzing audio…
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                    <p className="text-xs text-warm-500 dark:text-warm-500">
                       Generating spectrogram → Running inference
                     </p>
                   </div>
@@ -263,12 +263,12 @@ export default function Classify() {
           {/* Loading overlay */}
           {loading && (
             <div className="card p-8 flex flex-col items-center gap-4 animate-fade-in">
-              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
               <div className="text-center">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <p className="text-sm font-medium text-warm-700 dark:text-warm-300">
                   Analyzing image…
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                <p className="text-xs text-warm-500 dark:text-warm-500 mt-1">
                   Resizing → Normalizing → Running inference
                 </p>
               </div>
@@ -276,7 +276,7 @@ export default function Classify() {
                 <img
                   src={imagePreviewUrl}
                   alt="Processing"
-                  className="w-24 h-24 object-cover rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 opacity-60"
+                  className="w-24 h-24 object-cover rounded-lg ring-1 ring-warm-300 dark:ring-warm-700 opacity-60"
                 />
               )}
             </div>
@@ -306,9 +306,9 @@ export default function Classify() {
                   setPhase('trim');
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium
-                  border border-slate-300 dark:border-slate-700
-                  text-slate-600 dark:text-slate-300
-                  hover:bg-slate-50 dark:hover:bg-slate-800
+                  border border-warm-300 dark:border-warm-700
+                  text-warm-600 dark:text-warm-300
+                  hover:bg-warm-150 dark:hover:bg-warm-700
                   transition-colors duration-150"
               >
                 Try Different Segment
@@ -323,9 +323,9 @@ export default function Classify() {
                   setPhase('recording');
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium
-                  border border-slate-300 dark:border-slate-700
-                  text-slate-600 dark:text-slate-300
-                  hover:bg-slate-50 dark:hover:bg-slate-800
+                  border border-warm-300 dark:border-warm-700
+                  text-warm-600 dark:text-warm-300
+                  hover:bg-warm-150 dark:hover:bg-warm-700
                   transition-colors duration-150
                   flex items-center gap-2"
               >
@@ -340,8 +340,8 @@ export default function Classify() {
             <button
               onClick={resetState}
               className="px-4 py-2 rounded-lg text-sm font-medium
-                bg-indigo-600 text-white
-                hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600
+                bg-warm-900 text-warm-50
+                hover:bg-warm-800 dark:bg-warm-700 dark:hover:bg-warm-600
                 transition-all duration-150 active:scale-[0.98]"
             >
               {isAudio
@@ -358,7 +358,7 @@ export default function Classify() {
 
               {/* Prediction card */}
               <div className="card p-6 space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                   Prediction
                 </p>
                 <div className="flex items-baseline gap-3">
@@ -370,7 +370,7 @@ export default function Classify() {
                   </span>
                 </div>
                 {fileName && (
-                  <p className="text-xs text-slate-400 dark:text-slate-600 font-mono truncate pt-2">
+                  <p className="text-xs text-warm-400 dark:text-warm-600 font-mono truncate pt-2">
                     {fileName}
                   </p>
                 )}
@@ -406,13 +406,13 @@ export default function Classify() {
             <div className="lg:col-span-1">
               <div className="card p-5 space-y-4 h-full">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                     {showAllProbs ? 'All Probabilities' : 'Top 5 Predictions'}
                   </p>
                   {sortedConfidences.length > 5 && (
                     <button
                       onClick={() => setShowAllProbs(!showAllProbs)}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
+                      className="text-xs text-accent dark:text-accent-light hover:text-accent-dark dark:hover:text-accent-light font-medium transition-colors"
                     >
                       {showAllProbs ? 'Show Less' : 'Show All'}
                     </button>
@@ -427,31 +427,31 @@ export default function Classify() {
                         <div className="flex justify-between text-xs">
                           <span className={
                             isTop
-                              ? 'font-semibold text-slate-900 dark:text-white capitalize'
+                              ? 'font-semibold text-warm-900 dark:text-warm-100 capitalize'
                               : isSignificant
-                              ? 'text-slate-600 dark:text-slate-400 capitalize'
-                              : 'text-slate-400 dark:text-slate-600 capitalize'
+                              ? 'text-warm-600 dark:text-warm-400 capitalize'
+                              : 'text-warm-400 dark:text-warm-600 capitalize'
                           }>
                             {cls}
                           </span>
                           <span className={`font-mono ${
                             isTop
-                              ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
+                              ? 'text-accent dark:text-accent-light font-semibold'
                               : isSignificant
-                              ? 'text-slate-500 dark:text-slate-500'
-                              : 'text-slate-400 dark:text-slate-600'
+                              ? 'text-warm-500 dark:text-warm-500'
+                              : 'text-warm-400 dark:text-warm-600'
                           }`}>
                             {(prob * 100).toFixed(1)}%
                           </span>
                         </div>
-                        <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-2 bg-warm-200 dark:bg-warm-700 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-500 ease-out ${
                               isTop
-                                ? 'bg-indigo-500 dark:bg-indigo-400'
+                                ? 'bg-accent dark:bg-accent-light'
                                 : isSignificant
-                                ? 'bg-slate-400 dark:bg-slate-600'
-                                : 'bg-slate-300 dark:bg-slate-700'
+                                ? 'bg-warm-500 dark:bg-warm-600'
+                                : 'bg-warm-400 dark:bg-warm-700'
                             }`}
                             style={{ width: animateBars ? `${prob * 100}%` : '0%' }}
                           />

@@ -274,8 +274,8 @@ export default function AudioTrimmer({
   if (loading) {
     return (
       <div className="card p-8 flex flex-col items-center gap-3 animate-fade-in">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-slate-500 dark:text-slate-400">Decoding audio...</p>
+        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-warm-500 dark:text-warm-400">Decoding audio...</p>
       </div>
     );
   }
@@ -284,7 +284,7 @@ export default function AudioTrimmer({
     return (
       <div className="card p-6 space-y-3 animate-fade-in">
         <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>
-        <button onClick={onCancel} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+        <button onClick={onCancel} className="text-sm text-warm-500 hover:text-warm-700 dark:hover:text-warm-300">
           Try another file
         </button>
       </div>
@@ -298,16 +298,16 @@ export default function AudioTrimmer({
       {/* File info */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+          <span className="text-sm font-medium text-warm-700 dark:text-warm-300 truncate">
             {file.name}
           </span>
-          <span className="text-xs text-slate-400 dark:text-slate-600 font-mono shrink-0">
+          <span className="text-xs text-warm-400 dark:text-warm-600 font-mono shrink-0">
             {formatTime(duration)}
           </span>
         </div>
         <button
           onClick={onCancel}
-          className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300
+          className="text-xs text-warm-500 hover:text-warm-700 dark:hover:text-warm-300
             transition-colors shrink-0 ml-2"
         >
           Change file
@@ -318,10 +318,10 @@ export default function AudioTrimmer({
       {!isShortClip && (
         <div className="card p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
               Select a {clipDuration}s segment to classify
             </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-600">
+            <p className="text-[10px] text-warm-400 dark:text-warm-600">
               Click or drag to reposition
             </p>
           </div>
@@ -343,8 +343,8 @@ export default function AudioTrimmer({
         <button
           onClick={togglePlayback}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-            bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300
-            hover:bg-slate-200 dark:hover:bg-slate-700
+            bg-warm-200 text-warm-600 dark:bg-warm-700 dark:text-warm-300
+            hover:bg-warm-300 dark:hover:bg-warm-600
             transition-colors duration-150"
         >
           {isPlaying ? (
@@ -364,8 +364,8 @@ export default function AudioTrimmer({
         <button
           onClick={handleClassify}
           className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium
-            bg-indigo-500 text-white hover:bg-indigo-600
-            dark:bg-indigo-600 dark:hover:bg-indigo-500
+            bg-accent text-white hover:bg-accent
+            dark:bg-accent dark:hover:bg-accent
             transition-colors duration-150"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -376,7 +376,7 @@ export default function AudioTrimmer({
       </div>
 
       {!isShortClip && (
-        <p className="text-[10px] text-slate-400 dark:text-slate-600 italic">
+        <p className="text-[10px] text-warm-400 dark:text-warm-600 italic">
           The model classifies {clipDuration}-second clips. Pick the section that best represents the instrument.
         </p>
       )}

@@ -15,7 +15,7 @@ function WaitingWaveform() {
       {[1, 2, 3, 4, 5, 6, 7].map((i) => (
         <div
           key={i}
-          className="w-[3px] rounded-full bg-slate-300 dark:bg-slate-700"
+          className="w-[3px] rounded-full bg-warm-400 dark:bg-warm-700"
           style={{
             animation: `wave 1.4s ease-in-out ${i * 0.1}s infinite`,
           }}
@@ -67,13 +67,13 @@ export default function AudioInputZone({
               flex flex-col items-center text-center
               transition-all duration-300
               ${dragOver
-                ? 'bg-indigo-50/80 dark:bg-indigo-500/5'
-                : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                ? 'bg-accent-subtle/80 dark:bg-accent/5'
+                : 'hover:bg-warm-150 dark:hover:bg-warm-700/40'
               }`}
           >
             {/* Glow ring on drag */}
             {dragOver && (
-              <div className="absolute inset-0 rounded-t-xl ring-2 ring-indigo-400/50 ring-inset pointer-events-none" />
+              <div className="absolute inset-0 rounded-t-xl ring-2 ring-accent-light/50 ring-inset pointer-events-none" />
             )}
 
             <input
@@ -91,15 +91,15 @@ export default function AudioInputZone({
             <div
               className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300
                 ${dragOver
-                  ? 'bg-indigo-100 dark:bg-indigo-500/15 scale-110'
-                  : 'bg-slate-100 dark:bg-slate-800 group-hover:scale-105'
+                  ? 'bg-accent-subtle dark:bg-accent/15 scale-110'
+                  : 'bg-warm-200 dark:bg-warm-700 group-hover:scale-105'
                 }`}
             >
               <svg
                 className={`w-7 h-7 transition-colors duration-300 ${
                   dragOver
-                    ? 'text-indigo-500'
-                    : 'text-slate-400 dark:text-slate-500'
+                    ? 'text-accent'
+                    : 'text-warm-500 dark:text-warm-500'
                 }`}
                 viewBox="0 0 24 24"
                 fill="none"
@@ -114,10 +114,10 @@ export default function AudioInputZone({
             </div>
 
             {/* Primary text */}
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <p className="text-sm font-semibold text-warm-700 dark:text-warm-300">
               Drop audio file here
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-warm-500 dark:text-warm-500 mt-1">
               or click to browse
             </p>
 
@@ -127,8 +127,8 @@ export default function AudioInputZone({
                 <span
                   key={fmt}
                   className="px-1.5 py-0.5 text-[10px] font-medium rounded
-                    bg-slate-100 text-slate-400
-                    dark:bg-slate-800 dark:text-slate-500"
+                    bg-warm-200 text-warm-500
+                    dark:bg-warm-700 dark:text-warm-500"
                 >
                   {fmt}
                 </span>
@@ -138,11 +138,11 @@ export default function AudioInputZone({
 
           {/* Divider with "or" */}
           <div className="flex items-center gap-3 px-8">
-            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-600">
+            <div className="flex-1 h-px bg-warm-300 dark:bg-warm-700" />
+            <span className="text-[10px] font-medium uppercase tracking-wider text-warm-400 dark:text-warm-600">
               or
             </span>
-            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+            <div className="flex-1 h-px bg-warm-300 dark:bg-warm-700" />
           </div>
 
           {/* Record button — pill, centered */}
@@ -153,9 +153,9 @@ export default function AudioInputZone({
                 onRecordClick();
               }}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium
-                bg-slate-100 text-slate-600
-                dark:bg-slate-800 dark:text-slate-300
-                hover:bg-slate-200 dark:hover:bg-slate-700
+                bg-warm-200 text-warm-600
+                dark:bg-warm-700 dark:text-warm-300
+                hover:bg-warm-300 dark:hover:bg-warm-600
                 transition-colors duration-150"
             >
               <svg
@@ -176,7 +176,7 @@ export default function AudioInputZone({
 
           {/* 2-second hint */}
           <div className="px-8 pb-5">
-            <p className="text-center text-[11px] text-slate-400 dark:text-slate-600">
+            <p className="text-center text-[11px] text-warm-400 dark:text-warm-600">
               You'll select a 2-second segment after uploading
             </p>
           </div>
@@ -189,7 +189,7 @@ export default function AudioInputZone({
           {/* Animated waveform */}
           <div
             className="w-16 h-16 rounded-2xl
-              bg-slate-50 dark:bg-slate-800/60
+              bg-warm-150 dark:bg-warm-700/60
               flex items-center justify-center"
           >
             <WaitingWaveform />
@@ -197,10 +197,10 @@ export default function AudioInputZone({
 
           {/* Status text */}
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-600">
+            <p className="text-xs font-semibold uppercase tracking-wider text-warm-400 dark:text-warm-600">
               Waiting for audio
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-500 leading-relaxed max-w-[200px]">
+            <p className="text-sm text-warm-500 dark:text-warm-500 leading-relaxed max-w-[200px]">
               {statusHint}
             </p>
           </div>

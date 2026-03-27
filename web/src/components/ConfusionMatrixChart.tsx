@@ -83,16 +83,16 @@ export default function ConfusionMatrixChart({ data }: Props) {
       {/* ── Header + Toggle ── */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             Confusion Matrix
           </h3>
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+          <div className="flex items-center gap-1.5 bg-warm-200 dark:bg-warm-700 rounded-lg p-0.5">
             <button
               onClick={() => setNormalized(false)}
               className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
                 ${!normalized
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'bg-white dark:bg-warm-700 text-warm-900 dark:text-warm-100 shadow-sm'
+                  : 'text-warm-500 dark:text-warm-400 hover:text-warm-700 dark:hover:text-warm-300'
                 }`}
             >
               Counts
@@ -101,15 +101,15 @@ export default function ConfusionMatrixChart({ data }: Props) {
               onClick={() => setNormalized(true)}
               className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-colors
                 ${normalized
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  ? 'bg-white dark:bg-warm-700 text-warm-900 dark:text-warm-100 shadow-sm'
+                  : 'text-warm-500 dark:text-warm-400 hover:text-warm-700 dark:hover:text-warm-300'
                 }`}
             >
               Recall %
             </button>
           </div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-warm-500 dark:text-warm-400">
           Visualizes correct predictions (diagonal) vs misclassifications. Darker colors indicate higher values.
         </p>
       </div>
@@ -161,18 +161,18 @@ export default function ConfusionMatrixChart({ data }: Props) {
 
       {/* ── Click Drill-Down Panel ── */}
       {selected && (
-        <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4 space-y-2 animate-fade-in">
+        <div className="rounded-lg bg-warm-50 dark:bg-warm-800/50 p-4 space-y-2 animate-fade-in">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-700 dark:text-slate-300">
+            <p className="text-xs text-warm-700 dark:text-warm-300">
               <span className="font-medium">True:</span>{' '}
-              <span className="text-indigo-600 dark:text-indigo-400">{data.class_names[selected.row]}</span>
+              <span className="text-accent dark:text-accent-light">{data.class_names[selected.row]}</span>
               {' → '}
               <span className="font-medium">Predicted:</span>{' '}
-              <span className="text-indigo-600 dark:text-indigo-400">{data.class_names[selected.col]}</span>
+              <span className="text-accent dark:text-accent-light">{data.class_names[selected.col]}</span>
             </p>
             <button
               onClick={() => setSelected(null)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="text-warm-500 hover:text-warm-600 dark:hover:text-warm-300 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M18 6L6 18M6 6l12 12" />
@@ -180,10 +180,10 @@ export default function ConfusionMatrixChart({ data }: Props) {
             </button>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-bold text-warm-900 dark:text-warm-100">
               {data.matrix[selected.row][selected.col]}
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
+            <div className="text-xs text-warm-500 dark:text-warm-400 space-y-0.5">
               <p>
                 samples {selected.row === selected.col ? 'correctly classified' : 'misclassified'}
               </p>

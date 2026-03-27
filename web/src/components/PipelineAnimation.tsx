@@ -164,7 +164,7 @@ export default function PipelineAnimation({
     <div className="flex items-center flex-shrink-0 w-6 justify-center">
       <svg
         viewBox="0 0 24 24"
-        className={`w-4 h-4 text-slate-400 dark:text-slate-600 transition-opacity duration-300 ${
+        className={`w-4 h-4 text-warm-400 dark:text-warm-600 transition-opacity duration-300 ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
       >
@@ -183,9 +183,9 @@ export default function PipelineAnimation({
   return (
     <div className="card relative overflow-hidden p-6 space-y-5 animate-fade-in">
       {/* ── Progress bar ── */}
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-slate-100 dark:bg-slate-800 rounded-t-xl overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-warm-200 dark:bg-warm-700 rounded-t-xl overflow-hidden">
         <div
-          className="h-full bg-indigo-500/60 dark:bg-indigo-400/40 transition-all ease-linear"
+          className="h-full bg-accent/60 dark:bg-accent-light/40 transition-all ease-linear"
           style={{
             width: stage >= 11 ? '100%' : `${Math.round((stage / 11) * 100)}%`,
             transitionDuration: '300ms',
@@ -196,17 +196,17 @@ export default function PipelineAnimation({
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             Processing Pipeline
           </p>
-          <p className="text-xs text-slate-400 dark:text-slate-600 mt-0.5">
+          <p className="text-xs text-warm-400 dark:text-warm-600 mt-0.5">
             Watch how your audio flows through the neural network
           </p>
         </div>
         {stage < 11 && (
           <button
             onClick={skip}
-            className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            className="text-xs text-warm-500 hover:text-warm-600 dark:hover:text-warm-300 transition-colors"
           >
             Skip &rarr;
           </button>
@@ -219,11 +219,11 @@ export default function PipelineAnimation({
         <div
           className={`flex-1 min-w-0 rounded-xl border p-3 transition-all duration-700 ease-out ${
             stage >= 1
-              ? 'opacity-100 translate-y-0 border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/5'
-              : 'opacity-0 translate-y-4 border-slate-200 dark:border-slate-800'
+              ? 'opacity-100 translate-y-0 border-accent/20 dark:border-accent/20 bg-accent-subtle/50 dark:bg-accent/5'
+              : 'opacity-0 translate-y-4 border-warm-300 dark:border-warm-700'
           }`}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500 dark:text-indigo-400 mb-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-accent dark:text-accent-light mb-1.5">
             Raw Audio
           </p>
           <svg
@@ -238,10 +238,10 @@ export default function PipelineAnimation({
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-indigo-500 dark:text-indigo-400"
+              className="text-accent dark:text-accent-light"
             />
           </svg>
-          <p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 text-center">
+          <p className="text-[9px] text-warm-400 dark:text-warm-600 mt-1 text-center">
             Amplitude vs Time
           </p>
         </div>
@@ -253,7 +253,7 @@ export default function PipelineAnimation({
           className={`flex-1 min-w-0 rounded-xl border p-3 transition-all duration-700 ease-out ${
             stage >= 3
               ? 'opacity-100 translate-y-0 border-amber-200 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5'
-              : 'opacity-0 translate-y-4 border-slate-200 dark:border-slate-800'
+              : 'opacity-0 translate-y-4 border-warm-300 dark:border-warm-700'
           }`}
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1.5">
@@ -264,7 +264,7 @@ export default function PipelineAnimation({
             className="w-full h-12 rounded"
             style={{ imageRendering: 'pixelated' }}
           />
-          <p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 text-center">
+          <p className="text-[9px] text-warm-400 dark:text-warm-600 mt-1 text-center">
             64 × 64 mel grid
           </p>
         </div>
@@ -276,14 +276,14 @@ export default function PipelineAnimation({
           className={`flex-[1.4] min-w-0 rounded-xl border p-3 transition-all duration-700 ease-out ${
             stage >= 5
               ? 'opacity-100 translate-y-0 border-violet-200 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5'
-              : 'opacity-0 translate-y-4 border-slate-200 dark:border-slate-800'
+              : 'opacity-0 translate-y-4 border-warm-300 dark:border-warm-700'
           }`}
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-1.5">
             Neural Network
           </p>
           <NeuralNetDiagram activeLayer={activeLayer} />
-          <p className="text-[9px] text-slate-400 dark:text-slate-600 mt-1 text-center">
+          <p className="text-[9px] text-warm-400 dark:text-warm-600 mt-1 text-center">
             4096 → 128 → 64 → 10
           </p>
         </div>
@@ -296,13 +296,13 @@ export default function PipelineAnimation({
             flex flex-col items-center justify-center ${
             stage >= 10
               ? 'opacity-100 translate-y-0 border-emerald-200 dark:border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-500/5'
-              : 'opacity-0 translate-y-4 border-slate-200 dark:border-slate-800'
+              : 'opacity-0 translate-y-4 border-warm-300 dark:border-warm-700'
           }`}
         >
           <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">
             Prediction
           </p>
-          <p className="text-base font-bold text-slate-900 dark:text-white capitalize leading-tight">
+          <p className="text-base font-bold text-warm-900 dark:text-warm-100 capitalize leading-tight">
             {prediction}
           </p>
           <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -323,15 +323,15 @@ export default function PipelineAnimation({
             <div
               className={`w-1.5 h-1.5 rounded-full transition-colors duration-500 ${
                 stage >= threshold
-                  ? 'bg-indigo-500 dark:bg-indigo-400'
-                  : 'bg-slate-200 dark:bg-slate-800'
+                  ? 'bg-accent dark:bg-accent-light'
+                  : 'bg-warm-300 dark:bg-warm-700'
               }`}
             />
             <span
               className={`text-[10px] transition-colors duration-500 ${
                 stage >= threshold
-                  ? 'text-slate-600 dark:text-slate-400'
-                  : 'text-slate-300 dark:text-slate-700'
+                  ? 'text-warm-600 dark:text-warm-400'
+                  : 'text-warm-400 dark:text-warm-700'
               }`}
             >
               {label}
@@ -379,7 +379,7 @@ function NeuralNetDiagram({ activeLayer }: { activeLayer: number }) {
               className={`transition-all duration-500 ${
                 lit
                   ? 'stroke-violet-300 dark:stroke-violet-600'
-                  : 'stroke-slate-200 dark:stroke-slate-800'
+                  : 'stroke-warm-300 dark:stroke-warm-700'
               }`}
             />
           ))
@@ -403,7 +403,7 @@ function NeuralNetDiagram({ activeLayer }: { activeLayer: number }) {
                   ? 'fill-emerald-500 dark:fill-emerald-400'
                   : lit
                     ? 'fill-violet-500 dark:fill-violet-400'
-                    : 'fill-slate-200 dark:fill-slate-700'
+                    : 'fill-warm-300 dark:fill-warm-700'
               }`}
             />
           );
@@ -420,7 +420,7 @@ function NeuralNetDiagram({ activeLayer }: { activeLayer: number }) {
             x={x}
             y={H - 14}
             textAnchor="middle"
-            className="fill-slate-300 dark:fill-slate-700"
+            className="fill-warm-400 dark:fill-warm-700"
             style={{ fontSize: '6px' }}
           >
             ⋮
@@ -435,7 +435,7 @@ function NeuralNetDiagram({ activeLayer }: { activeLayer: number }) {
           x={xs[li]}
           y={H - 2}
           textAnchor="middle"
-          className="fill-slate-400 dark:fill-slate-600"
+          className="fill-warm-500 dark:fill-warm-600"
           style={{ fontSize: '5px' }}
         >
           {layer.size}

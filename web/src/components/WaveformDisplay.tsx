@@ -109,10 +109,10 @@ export default function WaveformDisplay({ waveform, duration }: WaveformDisplayP
   return (
     <div className="space-y-3 h-full flex flex-col">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
           Waveform
         </p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-600">
+        <p className="text-[10px] text-warm-400 dark:text-warm-600">
           Amplitude vs Time
         </p>
       </div>

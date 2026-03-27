@@ -4,36 +4,30 @@ import { api } from '../api/client';
 import { useModel } from '../contexts/ModelContext';
 import type { HealthResponse, ModelInfo } from '../types';
 
-/* ── Pipeline stages per modality ── */
-
 const audioPipeline = [
   {
     title: 'Audio Input',
-    detail: 'Raw .wav file',
+    detail: 'Raw waveform',
     mono: 'signal[t]',
-    color: 'bg-sky-500',
-    lightBg: 'bg-sky-50 dark:bg-sky-500/5',
+    bg: 'bg-warm-150 dark:bg-warm-700/40',
   },
   {
     title: 'Spectrogram',
     detail: 'Mel-frequency',
     mono: '64×64 matrix',
-    color: 'bg-violet-500',
-    lightBg: 'bg-violet-50 dark:bg-violet-500/5',
+    bg: 'bg-warm-200 dark:bg-warm-700/50',
   },
   {
     title: 'Neural Network',
     detail: '3-layer dense',
     mono: 'f(Wx + b)',
-    color: 'bg-indigo-500',
-    lightBg: 'bg-indigo-50 dark:bg-indigo-500/5',
+    bg: 'bg-warm-300/60 dark:bg-warm-700/60',
   },
   {
     title: 'Classification',
-    detail: '10 categories',
+    detail: 'Probability output',
     mono: 'argmax(p)',
-    color: 'bg-emerald-500',
-    lightBg: 'bg-emerald-50 dark:bg-emerald-500/5',
+    bg: 'bg-warm-300/80 dark:bg-warm-700/70',
   },
 ];
 
@@ -42,58 +36,52 @@ const imagePipeline = [
     title: 'Image Input',
     detail: 'JPG / PNG file',
     mono: 'img[h,w,c]',
-    color: 'bg-sky-500',
-    lightBg: 'bg-sky-50 dark:bg-sky-500/5',
+    bg: 'bg-warm-150 dark:bg-warm-700/40',
   },
   {
     title: 'Preprocess',
     detail: 'Resize & normalize',
     mono: '64×64 matrix',
-    color: 'bg-violet-500',
-    lightBg: 'bg-violet-50 dark:bg-violet-500/5',
+    bg: 'bg-warm-200 dark:bg-warm-700/50',
   },
   {
     title: 'Neural Network',
     detail: '3-layer dense',
     mono: 'f(Wx + b)',
-    color: 'bg-indigo-500',
-    lightBg: 'bg-indigo-50 dark:bg-indigo-500/5',
+    bg: 'bg-warm-300/60 dark:bg-warm-700/60',
   },
   {
     title: 'Classification',
     detail: 'N categories',
     mono: 'argmax(p)',
-    color: 'bg-emerald-500',
-    lightBg: 'bg-emerald-50 dark:bg-emerald-500/5',
+    bg: 'bg-warm-300/80 dark:bg-warm-700/70',
   },
 ];
-
-/* ── Feature cards per modality ── */
 
 const audioFeatures = [
   {
     path: '/classify',
     title: 'Classify Audio',
-    description: 'Upload a sound or use your microphone to identify what the neural network hears.',
-    accent: 'group-hover:text-sky-500',
+    description: 'Upload a sound or use your microphone — the network will identify what it hears.',
+    accentHover: 'group-hover:text-accent',
   },
   {
     path: '/dashboard',
-    title: 'Training Dashboard',
-    description: 'Explore training curves, loss landscapes, and the confusion matrix interactively.',
-    accent: 'group-hover:text-violet-500',
+    title: 'Training Metrics',
+    description: 'Loss curves, confusion matrices, and per-class performance at a glance.',
+    accentHover: 'group-hover:text-accent',
   },
   {
     path: '/explorer',
     title: 'Feature Explorer',
-    description: 'Visualize how the network organizes sounds in high-dimensional feature space via t-SNE.',
-    accent: 'group-hover:text-indigo-500',
+    description: 'See how the network organizes sounds in high-dimensional space via t-SNE.',
+    accentHover: 'group-hover:text-accent',
   },
   {
     path: '/what-if',
-    title: 'What-If Analysis',
-    description: 'Modify spectrograms and observe how small changes shift the network\'s predictions.',
-    accent: 'group-hover:text-emerald-500',
+    title: 'What-If Lab',
+    description: 'Edit spectrograms directly and watch how small changes shift predictions.',
+    accentHover: 'group-hover:text-accent',
   },
 ];
 
@@ -101,30 +89,28 @@ const imageFeatures = [
   {
     path: '/classify',
     title: 'Classify Image',
-    description: 'Upload an image and see what the neural network identifies in the visual pattern.',
-    accent: 'group-hover:text-sky-500',
+    description: 'Upload an image and see what the network identifies in the visual pattern.',
+    accentHover: 'group-hover:text-accent',
   },
   {
     path: '/dashboard',
-    title: 'Training Dashboard',
-    description: 'Explore training curves, loss landscapes, and the confusion matrix interactively.',
-    accent: 'group-hover:text-violet-500',
+    title: 'Training Metrics',
+    description: 'Loss curves, confusion matrices, and per-class performance at a glance.',
+    accentHover: 'group-hover:text-accent',
   },
   {
     path: '/explorer',
     title: 'Feature Explorer',
-    description: 'Visualize how the network organizes images in high-dimensional feature space via t-SNE.',
-    accent: 'group-hover:text-indigo-500',
+    description: 'Visualize how the network clusters images in high-dimensional feature space.',
+    accentHover: 'group-hover:text-accent',
   },
   {
     path: '/what-if',
-    title: 'What-If Analysis',
-    description: 'Paint on the preprocessed input and observe how changes shift the network\'s predictions.',
-    accent: 'group-hover:text-emerald-500',
+    title: 'What-If Lab',
+    description: 'Paint on preprocessed inputs and observe how changes shift predictions.',
+    accentHover: 'group-hover:text-accent',
   },
 ];
-
-/* ── Component ── */
 
 export default function Home() {
   const { engine, modality, dataset, activeDataset } = useModel();
@@ -132,14 +118,12 @@ export default function Home() {
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [error, setError] = useState(false);
 
-  // Health check (always works, good fallback for class list)
   useEffect(() => {
     api.health()
       .then(setHealth)
       .catch(() => {});
   }, []);
 
-  // Model info (re-fetch on engine/dataset change)
   useEffect(() => {
     let cancelled = false;
     api.modelInfo(engine, dataset)
@@ -164,68 +148,64 @@ export default function Home() {
     [isAudio],
   );
 
-  /* Classes subtitle — use the registry name, which is "Instrument Families" for audio/music */
-  const classesSubtitle = datasetLabel;
-
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-8 py-10 space-y-12">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="stagger-1 space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {isAudio ? 'Acoustic Pattern Recognition Engine' : 'Visual Pattern Recognition Engine'}
+        <h1 className="font-display text-3xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
+          {isAudio ? 'Acoustic Pattern Recognition' : 'Visual Pattern Recognition'}
         </h1>
-        <p className="text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+        <p className="text-base text-warm-600 dark:text-warm-400 max-w-2xl leading-relaxed">
           {isAudio
             ? (isCustom
-                ? 'A fully hand-engineered neural network — zero frameworks, zero shortcuts. Raw audio is decomposed into spectrograms and fed through a forward pass, backpropagation loop, and weight update cycle built entirely from first principles in NumPy. Every gradient is computed, every matrix is multiplied, every parameter is tuned — by code written from the ground up.'
-                : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same dataset and architecture.'
+                ? 'A neural network written entirely from scratch in NumPy. Raw audio becomes spectrograms, then passes through hand-coded forward propagation, backprop, and gradient descent — no frameworks involved.'
+                : 'The same architecture powered by PyTorch. Compare how an industry-standard framework performs against the hand-built NumPy implementation on identical data.'
               )
             : (isCustom
-                ? 'A fully hand-engineered neural network applied to visual data — zero frameworks, zero shortcuts. Images are preprocessed and fed through a forward pass, backpropagation loop, and weight update cycle built entirely from first principles in NumPy.'
-                : 'The same architecture, now powered by PyTorch. Compare how an industry-standard ML framework performs against the hand-built NumPy implementation on the same image dataset and architecture.'
+                ? 'A neural network written entirely from scratch in NumPy for visual data. Images are preprocessed and classified through hand-coded layers — no frameworks involved.'
+                : 'The same architecture powered by PyTorch. Compare framework performance against the hand-built implementation on identical image data.'
               )
           }
         </p>
         <div className="flex items-center gap-2 pt-1">
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-accent-subtle text-accent dark:bg-accent/10 dark:text-accent-light">
             {isAudio ? 'Audio' : 'Image'}
           </span>
-          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-warm-200 text-warm-600 dark:bg-warm-700 dark:text-warm-400">
             {datasetLabel}
           </span>
         </div>
       </header>
 
-      {/* ── Pipeline Visualization ── */}
+      {/* Pipeline */}
       <section className="stagger-2 space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
           Processing Pipeline
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {pipelineStages.map((stage, i) => (
             <div key={stage.title} className="relative">
-              <div className={`card p-4 ${stage.lightBg} border-transparent`}>
+              <div className={`card p-4 ${stage.bg} border-transparent`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-2 h-2 rounded-full ${stage.color}`} />
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                  <span className="text-[10px] font-medium text-warm-500 dark:text-warm-400">
                     Step {i + 1}
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                <p className="font-display text-sm font-semibold text-warm-900 dark:text-warm-100">
                   {stage.title}
                 </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-warm-600 dark:text-warm-400 mt-0.5">
                   {stage.detail}
                 </p>
-                <code className="block mt-2 text-[11px] font-mono text-slate-500 dark:text-slate-500">
+                <code className="block mt-2 text-[11px] font-mono text-warm-500 dark:text-warm-500">
                   {stage.mono}
                 </code>
               </div>
-              {/* Arrow connector */}
               {i < pipelineStages.length - 1 && (
                 <div className="hidden lg:block absolute -right-2.5 top-1/2 -translate-y-1/2 z-10">
-                  <svg width="10" height="10" viewBox="0 0 10 10" className="text-slate-400 dark:text-slate-700">
+                  <svg width="10" height="10" viewBox="0 0 10 10" className="text-warm-400 dark:text-warm-600">
                     <path d="M1 1l8 4-8 4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
@@ -235,15 +215,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Stats Row ── */}
+      {/* Stats */}
       <section className="stagger-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Architecture', value: '3-Layer Dense', sub: 'ReLU + Softmax' },
-          {
-            label: 'Classes',
-            value: String(numClasses),
-            sub: classesSubtitle,
-          },
+          { label: 'Classes', value: String(numClasses), sub: datasetLabel },
           {
             label: 'Implementation',
             value: isCustom ? 'Pure NumPy' : 'PyTorch',
@@ -254,28 +230,28 @@ export default function Home() {
             value: modelInfo?.test_accuracy != null
               ? `${(modelInfo.test_accuracy * 100).toFixed(1)}%`
               : '—',
-            sub: modelInfo
+            sub: modelInfo && modelInfo.parameters != null
               ? `${modelInfo.parameters.toLocaleString()} params`
               : error ? 'Model not loaded' : 'Loading…',
           },
         ].map((stat) => (
           <div key={stat.label} className="card p-4">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-500">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-warm-500 dark:text-warm-500">
               {stat.label}
             </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+            <p className="mt-1 font-display text-lg font-semibold text-warm-900 dark:text-warm-100">
               {stat.value}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
+            <p className="text-xs text-warm-500 dark:text-warm-500 mt-0.5">
               {stat.sub}
             </p>
           </div>
         ))}
       </section>
 
-      {/* ── Feature Cards ── */}
+      {/* Features */}
       <section className="stagger-4 space-y-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
           Explore
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -286,14 +262,14 @@ export default function Home() {
               className="group card-hover p-5 flex flex-col justify-between"
             >
               <div>
-                <h3 className={`text-sm font-semibold text-slate-900 dark:text-white transition-colors ${feat.accent}`}>
+                <h3 className={`font-display text-sm font-semibold text-warm-900 dark:text-warm-100 transition-colors ${feat.accentHover}`}>
                   {feat.title}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+                <p className="text-sm text-warm-600 dark:text-warm-400 mt-1.5 leading-relaxed">
                   {feat.description}
                 </p>
               </div>
-              <div className="mt-4 flex items-center text-xs font-medium text-slate-500 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors duration-150">
+              <div className="mt-4 flex items-center text-xs font-medium text-warm-500 dark:text-warm-500 group-hover:text-accent dark:group-hover:text-accent-light transition-colors duration-150">
                 Open
                 <svg className="ml-1 w-3 h-3 transition-transform duration-200 group-hover:translate-x-1" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2.5 6h7M6.5 3l3 3-3 3" />
@@ -304,10 +280,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Classes Preview ── */}
+      {/* Classes */}
       {classNames.length > 0 && (
         <section className="stagger-5 space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+          <h2 className="text-[10px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
             {isAudio ? 'Recognized Sound Classes' : 'Recognized Image Classes'}
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -315,8 +291,8 @@ export default function Home() {
               <span
                 key={cls}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg capitalize
-                  bg-slate-100 text-slate-600
-                  dark:bg-slate-800 dark:text-slate-300"
+                  bg-warm-200 text-warm-600
+                  dark:bg-warm-700 dark:text-warm-300"
               >
                 {cls}
               </span>

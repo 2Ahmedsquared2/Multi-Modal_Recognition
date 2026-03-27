@@ -224,8 +224,8 @@ export default function MicrophoneRecorder({
       {/* Back link */}
       <button
         onClick={onCancel}
-        className="text-sm text-slate-500 dark:text-slate-400
-          hover:text-slate-700 dark:hover:text-slate-200
+        className="text-sm text-warm-500 dark:text-warm-400
+          hover:text-warm-700 dark:hover:text-warm-200
           transition-colors flex items-center gap-1"
       >
         <svg
@@ -246,10 +246,10 @@ export default function MicrophoneRecorder({
       <div className="card p-10 flex flex-col items-center text-center space-y-6">
         {/* ── Heading ── */}
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-warm-900 dark:text-warm-100">
             Record from Microphone
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-warm-500 dark:text-warm-400">
             {state === 'idle' &&
               `Record up to ${MAX_DURATION}s, then pick a 2-second clip to classify`}
             {state === 'requesting' && 'Waiting for microphone permission…'}
@@ -264,11 +264,11 @@ export default function MicrophoneRecorder({
           <button
             onClick={startRecording}
             className="group relative w-24 h-24 rounded-full
-              bg-indigo-500 hover:bg-indigo-600
-              dark:bg-indigo-600 dark:hover:bg-indigo-500
+              bg-accent hover:bg-accent
+              dark:bg-accent dark:hover:bg-accent
               transition-colors duration-200
               flex items-center justify-center
-              shadow-lg shadow-indigo-500/25"
+              shadow-lg shadow-accent/25"
           >
             <svg
               className="w-10 h-10 text-white"
@@ -289,12 +289,12 @@ export default function MicrophoneRecorder({
         {state === 'requesting' && (
           <div
             className="w-24 h-24 rounded-full
-              bg-slate-200 dark:bg-slate-700
+              bg-warm-300 dark:bg-warm-600
               flex items-center justify-center
               animate-pulse"
           >
             <svg
-              className="w-10 h-10 text-slate-400 dark:text-slate-500"
+              className="w-10 h-10 text-warm-500 dark:text-warm-500"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -331,20 +331,20 @@ export default function MicrophoneRecorder({
             </div>
 
             {/* Elapsed time (large) */}
-            <p className="text-3xl font-mono font-semibold text-slate-900 dark:text-white tabular-nums">
+            <p className="text-3xl font-mono font-semibold text-warm-900 dark:text-warm-100 tabular-nums">
               {fmt(elapsed)}
-              <span className="text-base text-slate-400 dark:text-slate-500">
+              <span className="text-base text-warm-500 dark:text-warm-500">
                 {' '}/ {fmt(MAX_DURATION)}
               </span>
             </p>
 
             {/* Audio level meter */}
             <div className="w-72 space-y-1">
-              <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex justify-between text-[11px] text-warm-500 dark:text-warm-400">
                 <span>Level</span>
                 <span>{Math.round(audioLevel * 100)}%</span>
               </div>
-              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-2 bg-warm-300 dark:bg-warm-600 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-75
                     bg-gradient-to-r from-emerald-400 to-emerald-500"
@@ -355,9 +355,9 @@ export default function MicrophoneRecorder({
 
             {/* Time progress bar */}
             <div className="w-72">
-              <div className="h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-1 bg-warm-300 dark:bg-warm-600 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-indigo-500 transition-all duration-100 ease-linear"
+                  className="h-full rounded-full bg-accent transition-all duration-100 ease-linear"
                   style={{
                     width: `${(elapsed / MAX_DURATION) * 100}%`,
                   }}
@@ -366,7 +366,7 @@ export default function MicrophoneRecorder({
             </div>
 
             {!canStop && (
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-warm-500 dark:text-warm-500">
                 Record at least {MIN_DURATION}s…
               </p>
             )}
@@ -377,10 +377,10 @@ export default function MicrophoneRecorder({
         {state === 'converting' && (
           <div className="flex flex-col items-center gap-4 py-4">
             <div
-              className="w-12 h-12 border-[3px] border-indigo-500
+              className="w-12 h-12 border-[3px] border-accent
                 border-t-transparent rounded-full animate-spin"
             />
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-warm-500 dark:text-warm-400">
               Converting to WAV…
             </p>
           </div>
@@ -419,9 +419,9 @@ export default function MicrophoneRecorder({
                   setErrorMsg(null);
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium
-                  bg-indigo-50 text-indigo-700
-                  dark:bg-indigo-500/10 dark:text-indigo-400
-                  hover:bg-indigo-100 dark:hover:bg-indigo-500/20
+                  bg-accent-subtle text-accent-dark
+                  dark:bg-accent/10 dark:text-accent-light
+                  hover:bg-accent-subtle dark:hover:bg-accent/20
                   transition-colors"
               >
                 Try Again
@@ -429,9 +429,9 @@ export default function MicrophoneRecorder({
               <button
                 onClick={onCancel}
                 className="px-4 py-2 rounded-lg text-sm font-medium
-                  border border-slate-300 dark:border-slate-700
-                  text-slate-600 dark:text-slate-300
-                  hover:bg-slate-50 dark:hover:bg-slate-800
+                  border border-warm-300 dark:border-warm-700
+                  text-warm-600 dark:text-warm-300
+                  hover:bg-warm-150 dark:hover:bg-warm-700
                   transition-colors"
               >
                 Upload a file instead

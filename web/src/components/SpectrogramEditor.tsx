@@ -259,7 +259,7 @@ export default function SpectrogramEditor({
   return (
     <div className="space-y-1.5">
       {label && (
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
           {label}
         </h3>
       )}

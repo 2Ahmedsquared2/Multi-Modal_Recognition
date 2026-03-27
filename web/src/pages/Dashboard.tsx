@@ -87,22 +87,22 @@ export default function Dashboard() {
       {/* Header */}
       <header className="stagger-1 space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-warm-900 dark:text-warm-100">
             Training Dashboard
           </h1>
           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full
             ${engine === 'custom'
-              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400'
-              : 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+              ? 'bg-accent-subtle text-accent dark:bg-accent/10 dark:text-accent-light'
+              : 'bg-warm-200 text-warm-600 dark:bg-warm-700 dark:text-warm-400'
             }`}
           >
             {engineLabel}
           </span>
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warm-200 text-warm-600 dark:bg-warm-700 dark:text-warm-400">
             {datasetLabel}
           </span>
         </div>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-warm-600 dark:text-warm-400">
           {engineLabel} model performance on the <span className="font-medium">{datasetLabel}</span> dataset
           — training curves, confusion matrix, and per-class metrics.
         </p>
@@ -139,7 +139,7 @@ export default function Dashboard() {
         </div>
       ) : error ? (
         <div className="card p-8 text-center">
-          <p className="text-sm text-slate-500 dark:text-slate-500">
+          <p className="text-sm text-warm-500 dark:text-warm-500">
             Could not load metrics. Make sure the backend is running.
           </p>
         </div>
@@ -149,38 +149,38 @@ export default function Dashboard() {
           <div className="stagger-2 grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Accuracy */}
             <div className="card p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                 Overall Accuracy
               </p>
-              <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+              <p className="mt-1 font-display text-3xl font-bold text-warm-900 dark:text-warm-100">
                 {accuracy !== null ? `${(accuracy * 100).toFixed(1)}%` : '—'}
               </p>
             </div>
 
             {/* Macro F1 */}
             <div className="card p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                 Macro F1
               </p>
-              <p className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
+              <p className="mt-1 font-display text-3xl font-bold text-warm-900 dark:text-warm-100">
                 {metricsResp?.macro_f1 != null ? (metricsResp.macro_f1 * 100).toFixed(1) + '%' : '—'}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+              <p className="text-xs text-warm-500 dark:text-warm-500 mt-1">
                 Across {activeDataset ? activeDataset.num_classes : 'all'} classes
               </p>
             </div>
 
             {/* Best Class */}
             <div className="card p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                 Best Class
               </p>
               {metrics && metrics.length > 0 && (() => {
                 const best = metrics.reduce((a, b) => a.f1_score > b.f1_score ? a : b);
                 return (
                   <>
-                    <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white capitalize">{best.class_name}</p>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">F1: {(best.f1_score * 100).toFixed(1)}%</p>
+                    <p className="mt-1 font-display text-lg font-semibold text-warm-900 dark:text-warm-100 capitalize">{best.class_name}</p>
+                    <p className="text-xs text-success dark:text-success mt-0.5">F1: {(best.f1_score * 100).toFixed(1)}%</p>
                   </>
                 );
               })()}
@@ -188,22 +188,22 @@ export default function Dashboard() {
 
             {/* Model Info */}
             <div className="card p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                 Model
               </p>
               {modelInfo ? (
                 <>
-                  <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+                  <p className="mt-1 font-display text-lg font-semibold text-warm-900 dark:text-warm-100">
                     {modelInfo.parameters.toLocaleString()} params
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
+                  <p className="text-xs text-warm-500 dark:text-warm-500 mt-0.5">
                     {modelInfo.architecture.hidden_sizes.length} hidden layers
                     {' · '}
                     {history ? `${history.epochs} epochs` : ''}
                   </p>
                 </>
               ) : (
-                <p className="mt-1 text-sm text-slate-400">—</p>
+                <p className="mt-1 text-sm text-warm-400">—</p>
               )}
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function Dashboard() {
           {modelInfo && (
             <details className="stagger-3 card group">
               <summary className="px-5 py-4 cursor-pointer flex items-center justify-between
-                text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500
+                text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500
                 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                 <span>Architecture Details</span>
                 <svg className="w-4 h-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -224,21 +224,21 @@ export default function Dashboard() {
                   {modelInfo.architecture.layers.map((layer, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-xs"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warm-150 dark:bg-warm-700/50 text-xs"
                     >
-                      <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                      <span className="font-mono text-accent dark:text-accent-light">
                         {layer.input_size}→{layer.output_size}
                       </span>
-                      <span className="text-slate-400 dark:text-slate-600">|</span>
-                      <span className="text-slate-600 dark:text-slate-400">{layer.activation}</span>
-                      <span className="text-slate-400 dark:text-slate-600">|</span>
-                      <span className="text-slate-500 dark:text-slate-500 font-mono">
+                      <span className="text-warm-400 dark:text-warm-600">|</span>
+                      <span className="text-warm-600 dark:text-warm-400">{layer.activation}</span>
+                      <span className="text-warm-400 dark:text-warm-600">|</span>
+                      <span className="text-warm-500 dark:text-warm-500 font-mono">
                         {layer.parameters.toLocaleString()}
                       </span>
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-600">
+                <p className="mt-3 text-[11px] text-warm-400 dark:text-warm-600">
                   Input: {modelInfo.spectrogram_shape.join('×')}{' '}
                   {isAudio ? 'spectrogram' : 'preprocessed image'}
                   {isAudio && modelInfo.audio_duration > 0 && (
@@ -258,21 +258,21 @@ export default function Dashboard() {
           ) : (
             <section className="stagger-4 grid grid-cols-2 gap-3">
               <div className="card p-5 space-y-3">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                   Loss Over Epochs
                 </h3>
-                <div className="h-48 rounded-lg bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
-                  <p className="text-xs text-slate-500 dark:text-slate-500 font-mono">
+                <div className="h-48 rounded-lg bg-warm-200 dark:bg-warm-700/50 flex items-center justify-center">
+                  <p className="text-xs text-warm-500 dark:text-warm-500 font-mono">
                     No training history available
                   </p>
                 </div>
               </div>
               <div className="card p-5 space-y-3">
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-500">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-warm-500 dark:text-warm-500">
                   Accuracy Over Epochs
                 </h3>
-                <div className="h-48 rounded-lg bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center">
-                  <p className="text-xs text-slate-500 dark:text-slate-500 font-mono">
+                <div className="h-48 rounded-lg bg-warm-200 dark:bg-warm-700/50 flex items-center justify-center">
+                  <p className="text-xs text-warm-500 dark:text-warm-500 font-mono">
                     No training history available
                   </p>
                 </div>
@@ -287,7 +287,7 @@ export default function Dashboard() {
               <ConfusionMatrixChart data={confusion} />
             ) : (
               <div className="card p-5">
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-mono text-center py-16">
+                <p className="text-xs text-warm-500 dark:text-warm-500 font-mono text-center py-16">
                   Confusion matrix not available
                 </p>
               </div>
@@ -298,7 +298,7 @@ export default function Dashboard() {
               <ClassMetricsChart metrics={metrics} macroF1={metricsResp?.macro_f1 ?? undefined} />
             ) : (
               <div className="card p-5">
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-mono text-center py-16">
+                <p className="text-xs text-warm-500 dark:text-warm-500 font-mono text-center py-16">
                   Class metrics not available
                 </p>
               </div>
